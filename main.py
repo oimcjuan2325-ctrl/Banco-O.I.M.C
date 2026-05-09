@@ -6,7 +6,7 @@ st.set_page_config(page_title="Banco O.I.M.C. Nube", page_icon="🏛️")
 
 # 2. ENLACE AL EXCEL (Pon aquí tu enlace de Google Sheets)
 # IMPORTANTE: El enlace debe terminar en /export?format=csv
-URL = "https://docs.google.com/spreadsheets/d/1tfFblkVs5AcPGQFXHIv9lHE2I8MKvZTc-yApAnEWKRc/export? format=csv"
+URL = "https://docs.google.com/spreadsheets/d/1tfFblkVs5AcPGQFXHIv9lHE2I8MKvZTc-yApAnEWKRc/export?format=csv"
 
 # Función para cargar datos
 def cargar_datos():
