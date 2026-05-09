@@ -123,3 +123,15 @@ else:
             st.session_state.usuarios[target]["saldo"] += monto_crear
             st.success(f"Se han añadido {monto_crear} Oincalias a la cuenta de {target}")
             st.rerun()
+st.session_state.usuarios = {
+        "Iñaki": {"pin": "1010", "saldo": 0.0},
+        "Asier": {"pin": "2020", "saldo": 0.0},
+        "Juan": {"pin": "3030", "saldo": 0.0},
+        "Amets": {"pin": "4040", "saldo": 0.0},
+        "Erika": {"pin": "5050", "saldo": 0.0},
+        "Nahia": {"pin": "6060", "saldo": 0.0},
+        "Gaizka": {"pin": "7070", "saldo": 0.0},
+        "Mikel": {"pin": "8080", "saldo": 0.0},
+        "Yolanda": {"pin": "9090", "saldo": 0.0},
+        "Jesús": {"pin": "0000", "saldo": 0.0}
+    }
