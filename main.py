@@ -10,7 +10,7 @@ st.write("---")
 if 'banco' not in st.session_state:
     st.session_state.banco = {
         "Iñaki": 0000
-        "Asier: 0000
+        "Asier": 0000
         "Juan": 0000
         "Amets": 0000
         "Erika": 0000
