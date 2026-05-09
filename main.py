@@ -17,6 +17,8 @@ if 'banco' not in st.session_state:
         "Nahia": 0000
         "Gaizka": 0000
         "MIkel": 0000
+        "Yolanda": 0000
+        "Jesús": 0000
     }
 
 # Panel Lateral
@@ -36,3 +38,4 @@ if st.button("Confirmar Transacción"):
         st.success(f"¡Éxito! Has enviado {cantidad}€ a {destinatario}")
     else:
         st.error("Fondos insuficientes en tu cuenta.")
+            
