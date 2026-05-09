@@ -30,7 +30,7 @@ def obtener_datos_sc(sc):
 
 # 4. LOGIN
 if st.session_state.usuario_identificado is None:
-    st.title("🏛️ Terminal O.I.M.C.")
+    st.title("🏛️ Tu Cuenta Bancaria De La O.I.M.C.")
     with st.form("login"):
         u = st.text_input("Usuario:")
         p = st.text_input("PIN:", type="password")
