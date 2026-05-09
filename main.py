@@ -9,16 +9,16 @@ st.write("---")
 # Base de datos simplificada
 if 'banco' not in st.session_state:
     st.session_state.banco = {
-        "Iñaki": 0000
-        "Asier": 0000
-        "Juan": 0000
-        "Amets": 0000
-        "Erika": 0000
-        "Nahia": 0000
-        "Gaizka": 0000
-        "MIkel": 0000
-        "Yolanda": 0000
-        "Jesús": 0000
+        "Iñaki": 0,000
+        "Asier": 0,000
+        "Juan": 0,000
+        "Amets": 0,000
+        "Erika": 0,000
+        "Nahia": 0,000
+        "Gaizka": 0,000
+        "MIkel": 0,000
+        "Yolanda": 0,000
+        "Jesús": 0,000
     }
 
 # Panel Lateral
