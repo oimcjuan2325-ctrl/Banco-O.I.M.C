@@ -9,15 +9,20 @@ st.write("---")
 # Base de datos simplificada
 if 'banco' not in st.session_state:
     st.session_state.banco = {
-        "Diplomático": 2000.0,
-        "Iñaki Etayo": 150.0,
-        "Ciudadano 02": 50.0
+        "Iñaki": 0000
+        "Asier: 0000
+        "Juan": 0000
+        "Amets": 0000
+        "Erika": 0000
+        "Nahia": 0000
+        "Gaizka": 0000
+        "MIkel": 0000
     }
 
 # Panel Lateral
 st.sidebar.header("Acceso Ciudadano")
 user = st.sidebar.selectbox("Identificarse como:", list(st.session_state.banco.keys()))
-st.sidebar.metric("Saldo Actual", f"{st.session_state.banco[user]} €")
+st.sidebar.metric("Saldo Actual", f"{st.session_state.banco[user]} OI")
 
 # Formulario de Envío
 st.subheader("💸 Realizar Transferencia")
