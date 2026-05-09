@@ -54,6 +54,9 @@ else:
     st.title(f"👤 {user}")
     st.metric("Saldo Permanente", f"{saldo_actual} OI")
     st.metric("Social Credit", f"{sc_actual} pts")
+
+    # NOTA: Para guardar los cambios de vuelta al Excel de forma automática 
+    # se necesita una configuración de API de Google un poco más avanzada.
     
     st.info("⚠️ Los cambios realizados en esta sesión se guardan en la memoria. Para hacerlos permanentes en el Excel, el Administrador debe exportar los datos.")
 
