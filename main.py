@@ -42,7 +42,6 @@ if 'user' not in st.session_state:
     if st.button("Entrar"):
         if user_input != "---":
             idx = df[df['Usuario'] == user_input].index[0]
-            # Limpiamos el PIN del Excel por si tiene decimales
             pin_real = str(df.at[idx, 'PIN']).split('.')[0].strip()
             if pin_real == pin_input.strip():
                 st.session_state.user = user_input
@@ -71,29 +70,43 @@ else:
     st.divider()
 
     # OPCIONES DE USUARIO
-    menu = st.tabs(["💸 Bizum", "🔐 Seguridad", "⚙️ Ajustes"])
+    menu = st.tabs(["💸 Bizum", "💵 Sacar Efectivo", "🔐 Seguridad", "⚙️ Ajustes"])
 
     with menu[0]: # BIZUM
         st.subheader("Enviar dinero (Bizum)")
         destinatarios = [u for u in df['Usuario'].tolist() if u != u_id]
         dest = st.selectbox("¿A quién envías?", destinatarios)
-        monto = st.number_input("Cantidad", min_value=1, step=1)
+        monto = st.number_input("Cantidad a enviar", min_value=1, step=1, key="bizum_val")
         
-        if st.button("Enviar Bizum"):
+        if st.button("Confirmar Bizum"):
             if saldo_actual >= monto:
-                # Restar al emisor
                 df.at[idx, 'Saldo'] = saldo_actual - monto
-                # Sumar al receptor
                 dest_idx = df[df['Usuario'] == dest].index[0]
                 df.at[dest_idx, 'Saldo'] = int(float(df.at[dest_idx, 'Saldo'])) + monto
-                
                 actualizar_excel(df)
                 st.success(f"✅ ¡Enviados {monto} OI a {dest}!")
                 st.rerun()
             else:
                 st.error("No tienes suficiente saldo.")
 
-    with menu[1]: # CAMBIAR PIN
+    with menu[1]: # SACAR EFECTIVO
+        st.subheader("Retirar dinero en efectivo")
+        st.info("Al sacar dinero, se restará de tu cuenta digital. Juan te entregará las OI físicas.")
+        monto_cash = st.number_input("¿Cuánto quieres sacar?", min_value=1, step=1, key="cash_val")
+        
+        if st.button("Sacar en Efectivo"):
+            if saldo_actual >= monto_cash:
+                df.at[idx, 'Saldo'] = saldo_actual - monto_cash
+                actualizar_excel(df)
+                st.balloons()
+                st.success(f"✅ Has retirado {monto_cash} OI. ¡Avisa a Juan para que te las entregue!")
+                # Esto crea una nota temporal en la sesión para que Juan la vea
+                if 'avisos' not in st.session_state: st.session_state.avisos = []
+                st.session_state.avisos.append(f"🔔 {u_id} ha sacado {monto_cash} OI en efectivo.")
+            else:
+                st.error("No tienes suficiente saldo.")
+
+    with menu[2]: # SEGURIDAD (CAMBIAR PIN)
         st.subheader("Cambiar mi PIN")
         nuevo_pin = st.text_input("Nuevo PIN (4 números)", max_chars=4, type="password")
         if st.button("Guardar nuevo PIN"):
@@ -104,7 +117,7 @@ else:
             else:
                 st.error("El PIN debe ser de 4 números.")
 
-    with menu[2]: # CERRAR SESIÓN
+    with menu[3]: # CERRAR SESIÓN
         if st.button("Cerrar Sesión"):
             del st.session_state.user
             st.rerun()
@@ -113,8 +126,17 @@ else:
     es_admin = str(df.at[idx, 'Rol']).strip().lower() == "admin"
     if es_admin:
         st.divider()
-        st.header("👑 Panel de Administrador (Gobernador)")
+        st.header("👑 Panel de Administrador")
         
+        # Mostrar avisos de efectivo si existen en esta sesión
+        if 'avisos' in st.session_state and st.session_state.avisos:
+            st.warning("⚠️ RETIRADAS PENDIENTES:")
+            for aviso in st.session_state.avisos:
+                st.write(aviso)
+            if st.button("Limpiar Avisos"):
+                st.session_state.avisos = []
+                st.rerun()
+
         ciudadano = st.selectbox("Ciudadano a gestionar", df['Usuario'].tolist())
         c_idx = df[df['Usuario'] == ciudadano].index[0]
 
@@ -123,9 +145,7 @@ else:
         with admin_tabs[0]: # COBRAR IMPUESTOS
             impuesto = st.number_input("Monto impuesto", min_value=1, step=1)
             if st.button(f"Cobrar a {ciudadano}"):
-                # Quitar al ciudadano
                 df.at[c_idx, 'Saldo'] = int(float(df.at[c_idx, 'Saldo'])) - impuesto
-                # Sumar a Juan (el admin logueado)
                 df.at[idx, 'Saldo'] = int(float(df.at[idx, 'Saldo'])) + impuesto
                 actualizar_excel(df)
                 st.success(f"Impuesto cobrado. Los {impuesto} OI han ido a tu cuenta.")
@@ -139,11 +159,10 @@ else:
                 st.success(f"SC de {ciudadano} actualizado a {nuevo_sc}")
                 st.rerun()
 
-        with admin_tabs[2]: # PAGAR SUELDOS (Del Estado)
+        with admin_tabs[2]: # PAGAR SUELDOS
             sueldo_a_pagar = calc_sueldo(df.at[c_idx, 'SC'])
             if st.button(f"Pagar Sueldo ({sueldo_a_pagar} OI)"):
-                # Se suma al ciudadano, pero no se resta de Juan
                 df.at[c_idx, 'Saldo'] = int(float(df.at[c_idx, 'Saldo'])) + sueldo_a_pagar
                 actualizar_excel(df)
-                st.success(f"Sueldo de {sueldo_a_pagar} OI pagado por el Estado a {ciudadano}.")
+                st.success(f"Sueldo de {sueldo_a_pagar} OI pagado a {ciudadano}.")
                 st.rerun()
