@@ -7,7 +7,7 @@ st.set_page_config(page_title="O.I.M.C. Central Bank", page_icon="🏛️")
 # 2. BASE DE DATOS SIN CÉNTIMOS
 if 'usuarios' not in st.session_state:
     st.session_state.usuarios = {
-        "Juan": {"pin": "2325, "saldo": 10, "sc": 100, "rol": "admin"},
+        "Juan": {"pin": "2325", "saldo": 10, "sc": 100, "rol": "admin"},
         "Asier": {"pin": "2020", "saldo": 10, "sc": 80, "rol": "user"},
         "Erika": {"pin": "2013, "saldo": 10, "sc": 80, "rol": "user"},
         "Nahia": {"pin": "9389", "saldo": 10, "sc": 80, "rol": "user"},
