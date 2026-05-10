@@ -6,7 +6,7 @@ import pandas as pd
 st.set_page_config(page_title="O.I.M.C. Banco Real", page_icon="🏛️")
 
 # 2. CONEXIÓN (Asegúrate de que el enlace sea el de "Editor")
-url = "TU_URL_DE_GOOGLE_SHEETS_AQUÍ"
+url = "https://docs.google.com/spreadsheets/d/1tfFblkVs5AcPGQFXHIv9lHE2I8MKvZTc-yApAnEWKRc/edit?usp=sharing"
 conn = st.connection("gsheets", type=GSheetsConnection)
 
 # Función para leer sin caché (para ver cambios al instante)
