@@ -8,12 +8,12 @@ st.set_page_config(page_title="O.I.M.C. Central Bank", page_icon="🏛️")
 # lo ideal es conectar un Google Sheets. Por ahora, esto funciona en la sesión.
 if 'usuarios' not in st.session_state:
     st.session_state.usuarios = {
-        "Juan": {"pin": "1234", "saldo": 10.0, "sc": 100, "rol": "admin"},
+        "Juan": {"pin": "2313", "saldo": 10.0, "sc": 100, "rol": "admin"},
         "Asier": {"pin": "2020", "saldo": 10.0, "sc": 80, "rol": "user"},
         "Erika": {"pin": "0000", "saldo": 10.0, "sc": 80, "rol": "user"},
         "Nahia": {"pin": "0231", "saldo": 10.0, "sc": 80, "rol": "user"},
         "Gaizka": {"pin": "2310", "saldo": 10.0, "sc": 80, "rol": "user"},
-        "Mikel": {"pin": "0000", "saldo": 10.0, "sc": 80, "rol": "user"},
+        "Mikel": {"pin": "0010", "saldo": 10.0, "sc": 80, "rol": "user"},
         "Yolanda": {"pin": "0000", "saldo": 10.0, "sc": 80, "rol": "user"},
         "Jesús": {"pin": "0000", "saldo": 10.0, "sc": 80, "rol": "user"},
         "Iñaki": {"pin": "9999", "saldo": 10.0, "sc": 10, "rol": "user"}
