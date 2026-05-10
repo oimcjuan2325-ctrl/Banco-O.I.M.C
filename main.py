@@ -1,118 +1,106 @@
 import streamlit as st
-import pandas as pd
 
-# 1. CONFIGURACIÓN
-st.set_page_config(page_title="Banco Central O.I.M.C.", page_icon="🏛️")
+# 1. CONFIGURACIÓN DE LA PÁGINA
+st.set_page_config(page_title="O.I.M.C. Central Bank", page_icon="🏛️")
 
-# 2. BASE DE DATOS INICIAL (Todos empiezan con 10 OI)
-if 'db' not in st.session_state:
-    st.session_state.db = {
-        "Juan":    {"pin": "3030", "saldo": 10, "sc": 100}, 
-        "Iñaki":   {"pin": "1010", "saldo": 10, "sc": 20},
-        "Asier":   {"pin": "2020", "saldo": 10, "sc": 70},
-        "Amets":   {"pin": "4040", "saldo": 10, "sc": 70},
-        "Erika":   {"pin": "5050", "saldo": 10, "sc": 70},
-        "Nahia":   {"pin": "6060", "saldo": 10, "sc": 70},
-        "Gaizka":  {"pin": "7070", "saldo": 10, "sc": 70},
-        "Mikel":   {"pin": "8080", "saldo": 10, "sc": 70},
-        "Yolanda": {"pin": "9090", "saldo": 10, "sc": 70},
-        "Jesús":   {"pin": "0000", "saldo": 10, "sc": 70}
+# 2. BASE DE DATOS DE LA ALIANZA
+# Nota: En Streamlit Cloud, para que los datos no se borren al cerrar, 
+# lo ideal es conectar un Google Sheets. Por ahora, esto funciona en la sesión.
+if 'usuarios' not in st.session_state:
+    st.session_state.usuarios = {
+        "Juan": {"pin": "1234", "saldo": 10.0, "sc": 100, "rol": "admin"},
+        "Asier": {"pin": "2020", "saldo": 10.0, "sc": 80, "rol": "user"},
+        "Erika": {"pin": "0000", "saldo": 10.0, "sc": 80, "rol": "user"},
+        "Nahia": {"pin": "0231", "saldo": 10.0, "sc": 80, "rol": "user"},
+        "Gaizka": {"pin": "2310", "saldo": 10.0, "sc": 80, "rol": "user"},
+        "Mikel": {"pin": "0000", "saldo": 10.0, "sc": 80, "rol": "user"},
+        "Yolanda": {"pin": "0000", "saldo": 10.0, "sc": 80, "rol": "user"},
+        "Jesús": {"pin": "0000", "saldo": 10.0, "sc": 80, "rol": "user"},
+        "Iñaki": {"pin": "9999", "saldo": 10.0, "sc": 10, "rol": "user"}
     }
 
-if 'usuario_identificado' not in st.session_state:
-    st.session_state.usuario_identificado = None
-
-# 3. LÓGICA DE ESTATUS
-def obtener_datos_sc(sc):
-    if sc >= 90: return "Elite", 5
-    elif sc >= 70: return "Estándar", 4
-    elif sc >= 50: return "Riesgo", 2
-    else: return "Sancionado", 0
-
-# 4. LOGIN
-if st.session_state.usuario_identificado is None:
-    st.title("🏛️ Terminal O.I.M.C.")
-    with st.form("login"):
-        u = st.text_input("Usuario")
-        p = st.text_input("PIN", type="password")
-        if st.form_submit_button("Entrar"):
-            if u in st.session_state.db and st.session_state.db[u]["pin"] == p:
-                st.session_state.usuario_identificado = u
-                st.rerun()
-            else: st.error("Acceso denegado")
-
-# 5. PANEL DE USUARIO
-else:
-    user = st.session_state.usuario_identificado
-    datos = st.session_state.db[user]
-    estatus, sueldo_v = obtener_datos_sc(datos["sc"])
-
-    col1, col2 = st.columns([3, 1])
-    col1.title(f"👤 {user}")
-    if col2.button("Cerrar Sesión"):
-        st.session_state.usuario_identificado = None
-        st.rerun()
-
-    st.write("---")
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Social Credit", f"{datos['sc']} pts")
-    c2.metric("Estatus", estatus)
-    c3.metric("Sueldo Semanal", f"{sueldo_v} OI")
-
-    if datos["saldo"] < 0:
-        st.markdown(f"### Dinero Total: :red[{datos['saldo']} OI] ⚠️")
-    else:
-        st.subheader(f"Dinero Total: {datos['saldo']} OI")
-
-    # 6. TRANSFERENCIAS
-    st.write("---")
-    st.subheader("💸 Enviar Oincalias")
-    dest = st.selectbox("Enviar a:", [n for n in st.session_state.db.keys() if n != user])
-    monto_envio = st.number_input("Cantidad:", min_value=0, step=1)
-    if st.button("Confirmar Envío"):
-        if datos["saldo"] >= monto_envio and monto_envio > 0:
-            st.session_state.db[user]["saldo"] -= int(monto_envio)
-            st.session_state.db[dest]["saldo"] += int(monto_envio)
-            st.success(f"✅ ¡Enviadas {monto_envio} OI a {dest}!")
+# 3. SISTEMA DE LOGIN
+if 'usuario_logeado' not in st.session_state:
+    st.title("🏛️ O.I.M.C. - Acceso Central")
+    st.write("Bienvenido al sistema financiero de la Alianza.")
+    user = st.selectbox("Selecciona tu nombre", list(st.session_state.usuarios.keys()))
+    pin = st.text_input("Introduce tu PIN de 4 dígitos", type="password")
+    
+    if st.button("Entrar al Sistema"):
+        if st.session_state.usuarios[user]["pin"] == pin:
+            st.session_state.usuario_logeado = user
+            st.success(f"Sesión iniciada como {user}")
             st.rerun()
         else:
-            st.error("Saldo insuficiente o cantidad inválida.")
+            st.error("PIN incorrecto. Contacta con el Gobernador Juan.")
+else:
+    # --- INTERFAZ DE USUARIO LOGEADO ---
+    user_actual = st.session_state.usuario_logeado
+    datos = st.session_state.usuarios[user_actual]
+    
+    st.sidebar.title(f"👤 {user_actual}")
+    st.sidebar.write(f"Estatus: {datos['rol'].upper()}")
+    
+    if st.sidebar.button("Cerrar Sesión"):
+        del st.session_state.usuario_logeado
+        st.rerun()
 
-    # 7. ADMINISTRACIÓN SUPREMA (Solo Juan)
-    if user == "Juan":
-        st.write("---")
-        st.header("👑 Panel de Control Supremo")
+    # CAMBIO DE PIN
+    with st.sidebar.expander("⚙️ Seguridad"):
+        nuevo_pin = st.text_input("Cambiar PIN (4 dígitos)", max_chars=4)
+        if st.button("Actualizar PIN"):
+            st.session_state.usuarios[user_actual]["pin"] = nuevo_pin
+            st.success("PIN actualizado correctamente")
+
+    # PANEL DE SALDOS
+    st.title("📊 Mi Cuenta Bancaria")
+    
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Saldo Disponible", f"{st.session_state.usuarios[user_actual]['saldo']} OI")
+    col2.metric("Social Credit", f"{datos['sc']} SC")
+    
+    # Sueldo automático basado en Social Credit
+    sueldo_semanal = datos['sc'] / 10
+    col3.metric("Sueldo Próximo", f"{sueldo_semanal} OI")
+
+    st.divider()
+
+    # --- TRANSFERENCIAS AUTOMÁTICAS ---
+    st.subheader("💸 Enviar Fondos")
+    destinatario = st.selectbox("Enviar a:", [u for u in st.session_state.usuarios.keys() if u != user_actual])
+    cantidad = st.number_input("Cantidad de Oincalias", min_value=0.1, max_value=float(st.session_state.usuarios[user_actual]['saldo']), step=1.0)
+    
+    if st.button("Confirmar Transferencia"):
+        # EJECUCIÓN AUTOMÁTICA (SUMA Y RESTA)
+        st.session_state.usuarios[user_actual]["saldo"] -= cantidad
+        st.session_state.usuarios[destinatario]["saldo"] += cantidad
+        st.success(f"Has enviado {cantidad} OI a {destinatario} correctamente.")
+        st.balloons()
+        st.rerun()
+
+    # --- PANEL EXCLUSIVO DE JUAN (ADMIN) ---
+    if datos['rol'] == "admin":
+        st.divider()
+        st.header("👑 Herramientas de Gobernador")
         
-        # Editar Social Credit
-        target = st.selectbox("Gestionar Miembro:", list(st.session_state.db.keys()))
-        nuevo_sc = st.slider("Ajustar Social Credit:", 0, 100, int(st.session_state.db[target]["sc"]))
-        if st.button("Actualizar S.C."):
-            st.session_state.db[target]["sc"] = nuevo_sc
-            st.success(f"S.C. de {target} actualizado.")
-            st.rerun()
-
-        # Nóminas e Impuestos
-        st.subheader("📊 Ciclo Económico")
-        impuesto = st.number_input("Impuesto por ciclo (OI):", min_value=0, value=0)
-        if st.button("💸 EJECUTAR CICLO"):
-            recaudacion = 0
-            for m in st.session_state.db:
-                _, pago = obtener_datos_sc(st.session_state.db[m]["sc"])
-                if m != "Juan":
-                    st.session_state.db[m]["saldo"] += (pago - impuesto)
-                    recaudacion += impuesto
-                else:
-                    st.session_state.db[m]["saldo"] += pago
-            st.session_state.db["Juan"]["saldo"] += recaudacion
-            st.balloons()
-            st.rerun()
-
-        # SISTEMA DE GUARDADO (EL REPORTE)
-        st.write("---")
-        st.subheader("💾 Guardar Progreso")
-        if st.button("Generar Reporte de Saldo y S.C."):
-            resumen = []
-            for k, v in st.session_state.db.items():
-                resumen.append({"Usuario": k, "Saldo": v["saldo"], "S.C.": v["sc"]})
-            st.table(pd.DataFrame(resumen))
-            st.info("Juan, copia estos datos en tu Excel. Si quieres que se queden fijos en la web al reiniciar, actualiza los números en el código de GitHub.")
+        accion = st.radio("Operación Bancaria:", ["Pagar Sueldos (Global)", "Cobrar Impuestos (Individual)"])
+        
+        if accion == "Pagar Sueldos (Global)":
+            st.write("Este botón pagará a cada ciudadano su sueldo basado en su Social Credit actual.")
+            if st.button("EJECUTAR PAGO DE NÓMINAS"):
+                for u in st.session_state.usuarios:
+                    pago = st.session_state.usuarios[u]["sc"] / 10
+                    st.session_state.usuarios[u]["saldo"] += pago
+                st.success("Nóminas procesadas. Los saldos han sido actualizados.")
+                st.rerun()
+        
+        elif accion == "Cobrar Impuestos (Individual)":
+            sujeto = st.selectbox("Seleccionar ciudadano:", list(st.session_state.usuarios.keys()))
+            # El sistema sugiere 2 OI para Iñaki y 1 OI para el resto
+            sugerencia = 2.0 if sujeto == "Iñaki" else 1.0
+            monto = st.number_input("Monto a retirar:", value=sugerencia)
+            
+            if st.button(f"Ejecutar Cobro a {sujeto}"):
+                st.session_state.usuarios[sujeto]["saldo"] -= monto
+                st.warning(f"Se han detraído {monto} OI de la cuenta de {sujeto}")
+                st.rerun()
