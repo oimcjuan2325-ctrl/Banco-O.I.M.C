@@ -35,7 +35,8 @@ else:
     idx = df[df["Usuario"] == u_id].index[0]
     es_admin = str(df.at[idx, "Rol"]) == "admin"
     
-    # 3. INTERFAZ DE CIUDADANO
+# Cambia la línea donde comprueba el PIN por esta que es "a prueba de errores":
+if str(df.at[idx, 'PIN']).split('.')[0] == str(pin_input).strip():
     st.header(f"Hola, {u_id}")
     col_a, col_b, col_c = st.columns(3)
     col_a.metric("Saldo Disponible", f"{df.at[idx, 'Saldo']} OI")
