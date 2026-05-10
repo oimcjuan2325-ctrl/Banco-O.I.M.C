@@ -1,87 +1,109 @@
 import streamlit as st
-import math
 
-# 1. CONFIGURACIÓN
-st.set_page_config(page_title="O.I.M.C. Central Bank", page_icon="🏛️")
+# 1. CONFIGURACIÓN DE LA PÁGINA
+st.set_page_config(page_title="O.I.M.C. Banco Central", page_icon="🏛️", layout="wide")
 
-# 2. BASE DE DATOS SIN CÉNTIMOS
+# 2. INICIALIZACIÓN DE LA BASE DE DATOS
 if 'usuarios' not in st.session_state:
     st.session_state.usuarios = {
         "Juan": {"pin": "2325", "saldo": 10, "sc": 100, "rol": "admin"},
-        "Asier": {"pin": "2020", "saldo": 10, "sc": 80, "rol": "user"},
-        "Erika": {"pin": "2013", "saldo": 10, "sc": 80, "rol": "user"},
-        "Nahia": {"pin": "9389", "saldo": 10, "sc": 80, "rol": "user"},
-        "Gaizka": {"pin": "2932", "saldo": 10, "sc": 80, "rol": "user"},
-        "Mikel": {"pin": "2048", "saldo": 10, "sc": 80, "rol": "user"},
-        "Yolanda": {"pin": "1977", "saldo": 10, "sc": 80, "rol": "user"},
-        "Jesús": {"pin": "0000", "saldo": 10, "sc": 80, "rol": "user"},
-        "Iñaki": {"pin": "9999", "saldo": 10, "sc": 10, "rol": "user"}
+        "Asier": {"pin": "0000", "saldo": 10, "sc": 70, "rol": "user"},
+        "Erika": {"pin": "0000", "saldo": 10, "sc": 70, "rol": "user"},
+        "Nahia": {"pin": "0000", "saldo": 10, "sc": 70, "rol": "user"},
+        "Gaizka": {"pin": "0000", "saldo": 10, "sc": 70, "rol": "user"},
+        "Mikel": {"pin": "0000", "saldo": 10, "sc": 70, "rol": "user"},
+        "Yolanda": {"pin": "0000", "saldo": 10, "sc": 70, "rol": "user"},
+        "Jesús": {"pin": "0000", "saldo": 10, "sc": 70, "rol": "user"},
+        "Iñaki": {"pin": "9999", "saldo": 10, "sc": 20, "rol": "user"}
     }
 
+# Lógica para calcular sueldo según la tabla de la foto
+def calcular_sueldo(sc):
+    if sc >= 90: return 5
+    elif sc >= 70: return 4
+    elif sc >= 50: return 2
+    else: return 0
+
 # 3. LOGIN
-if 'usuario_logeado' not in st.session_state:
-    st.title("🏛️ O.I.M.C. - Acceso Central")
-    user = st.selectbox("Selecciona tu nombre", list(st.session_state.usuarios.keys()))
-    pin = st.text_input("PIN de 4 dígitos", type="password")
-    
-    if st.button("Entrar"):
-        if st.session_state.usuarios[user]["pin"] == pin:
-            st.session_state.usuario_logeado = user
+if 'logeado' not in st.session_state:
+    st.title("🏛️ O.I.M.C. - Iniciar Sesión")
+    nombre_login = st.selectbox("Selecciona tu cuenta", list(st.session_state.usuarios.keys()))
+    pin_login = st.text_input("Introduce tu PIN", type="password")
+    if st.button("Acceder"):
+        if st.session_state.usuarios[nombre_login]["pin"] == pin_login:
+            st.session_state.logeado = nombre_login
             st.rerun()
         else:
-            st.error("PIN incorrecto")
+            st.error("PIN incorrecto.")
 else:
-    user_actual = st.session_state.usuario_logeado
-    datos = st.session_state.usuarios[user_actual]
-    
-    st.sidebar.title(f"👤 {user_actual}")
-    if st.sidebar.button("Cerrar Sesión"):
-        del st.session_state.usuario_logeado
-        st.rerun()
+    u_id = st.session_state.logeado
+    user_data = st.session_state.usuarios[u_id]
 
-    # PANEL BANCARIO
+    # BARRA LATERAL
+    with st.sidebar:
+        st.title(f"👤 {u_id}")
+        if st.button("Cerrar Sesión"):
+            del st.session_state.logeado
+            st.rerun()
+        st.divider()
+        st.subheader("⚙️ Configuración")
+        nuevo_pin = st.text_input("Cambiar PIN", type="password", max_chars=4)
+        if st.button("Actualizar PIN"):
+            st.session_state.usuarios[u_id]["pin"] = nuevo_pin
+            st.success("PIN actualizado.")
+
+    # CUERPO PRINCIPAL
     st.title("📊 Mi Cuenta Bancaria")
     
     col1, col2, col3 = st.columns(3)
-    col1.metric("Saldo Disponible", f"{int(st.session_state.usuarios[user_actual]['saldo'])} OI")
-    col2.metric("Social Credit", f"{int(datos['sc'])} SC")
+    saldo_actual = st.session_state.usuarios[u_id]["saldo"]
+    sc_actual = st.session_state.usuarios[u_id]["sc"]
+    sueldo_prev = calcular_sueldo(sc_actual)
     
-    # SUELDO REDONDEADO (Cobra 1 OI por cada 10 de SC)
-    sueldo_semanal = math.ceil(datos['sc'] / 10) 
-    col3.metric("Sueldo Próximo", f"{int(sueldo_semanal)} OI")
+    col1.metric("Saldo Disponible", f"{saldo_actual} OI")
+    col2.metric("Social Credit", f"{sc_actual} SC")
+    col3.metric("Sueldo Próximo", f"{sueldo_prev} OI")
 
     st.divider()
 
-    # TRANSFERENCIAS (SOLO ENTEROS)
+    # ENVIAR FONDOS
     st.subheader("💸 Enviar Fondos")
-    destinatario = st.selectbox("Enviar a:", [u for u in st.session_state.usuarios.keys() if u != user_actual])
-    cantidad = st.number_input("Cantidad (Solo números enteros)", min_value=1, max_value=int(st.session_state.usuarios[user_actual]['saldo']), step=1)
-    
+    destinatario = st.selectbox("Enviar a:", [n for n in st.session_state.usuarios.keys() if n != u_id])
+    cantidad = st.number_input("Cantidad (OI)", min_value=1, max_value=int(saldo_actual) if saldo_actual > 0 else 1, step=1)
     if st.button("Confirmar Envío"):
-        st.session_state.usuarios[user_actual]["saldo"] -= int(cantidad)
-        st.session_state.usuarios[destinatario]["saldo"] += int(cantidad)
-        st.success(f"Transferencia de {int(cantidad)} OI completada.")
-        st.rerun()
+        if st.session_state.usuarios[u_id]["saldo"] >= cantidad:
+            st.session_state.usuarios[u_id]["saldo"] -= int(cantidad)
+            st.session_state.usuarios[destinatario]["saldo"] += int(cantidad)
+            st.success(f"Transferencia de {int(cantidad)} OI completada.")
+            st.rerun()
 
-    # PANEL DE JUAN (ADMIN)
-    if datos['rol'] == "admin":
+    # --- HERRAMIENTAS DE GOBERNADOR (JUAN) ---
+    if u_id == "Juan":
         st.divider()
         st.header("👑 Herramientas de Gobernador")
-        
-        opcion = st.radio("Acción:", ["Sueldos", "Impuestos"])
-        
-        if opcion == "Sueldos":
-            if st.button("PAGAR NÓMINAS REDONDAS"):
-                for u in st.session_state.usuarios:
-                    pago = math.ceil(st.session_state.usuarios[u]["sc"] / 10)
-                    st.session_state.usuarios[u]["saldo"] += pago
-                st.success("Sueldos pagados sin céntimos.")
+        accion = st.radio("Acción:", ["Pagar Sueldos", "Cobrar Impuestos", "Cambiar Social Credit"], horizontal=True)
+
+        if accion == "Pagar Sueldos":
+            st.write("Cada ciudadano recibirá su sueldo según la tabla oficial.")
+            if st.button("EJECUTAR PAGO GLOBAL"):
+                for n in st.session_state.usuarios:
+                    pago = calcular_sueldo(st.session_state.usuarios[n]["sc"])
+                    st.session_state.usuarios[n]["saldo"] += pago
+                st.success("Sueldos pagados.")
                 st.rerun()
-        
-        elif opcion == "Impuestos":
-            sujeto = st.selectbox("Cobrar a:", list(st.session_state.usuarios.keys()))
-            monto = st.number_input("Monto impuesto", value=2 if sujeto == "Iñaki" else 1, step=1)
-            if st.button(f"Cobrar a {sujeto}"):
-                st.session_state.usuarios[sujeto]["saldo"] -= int(monto)
-                st.warning(f"Cobrados {int(monto)} OI")
+
+        elif accion == "Cobrar Impuestos":
+            sujeto_imp = st.selectbox("Cobrar a:", list(st.session_state.usuarios.keys()))
+            monto_imp = st.number_input("Monto", min_value=1, value=1, step=1)
+            if st.button(f"Cobrar a {sujeto_imp}"):
+                st.session_state.usuarios[sujeto_imp]["saldo"] -= int(monto_imp)
+                st.warning(f"Cobrados {monto_imp} OI.")
+                st.rerun()
+
+        elif accion == "Cambiar Social Credit":
+            sujeto_sc = st.selectbox("Elegir ciudadano:", list(st.session_state.usuarios.keys()))
+            sc_nuevo = st.slider("Nuevo SC", 0, 100, int(st.session_state.usuarios[sujeto_sc]["sc"]))
+            if st.button(f"Actualizar SC"):
+                st.session_state.usuarios[sujeto_sc]["sc"] = sc_nuevo
+                st.success(f"SC de {sujeto_sc} actualizado.")
                 st.rerun()
