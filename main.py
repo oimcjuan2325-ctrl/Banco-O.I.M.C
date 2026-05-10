@@ -21,15 +21,20 @@ def guardar(nuevo_df):
     st.cache_data.clear()
     st.rerun()
 
-# Función para calcular el sueldo semanal
+# --- FUNCIÓN CORREGIDA SEGÚN TABLA OFICIAL ---
 def calcular_sueldo(sc_puntos):
     try:
         val = int(float(sc_puntos))
-        if val >= 90: return 10
-        elif val >= 70: return 7
-        elif val >= 50: return 4
-        else: return 0
-    except: return 0
+        if val >= 90:
+            return 5  # Elite
+        elif val >= 70:
+            return 4  # Estándar
+        elif val >= 50:
+            return 2  # Riesgo
+        else:
+            return 0  # Sancionado
+    except:
+        return 0
 
 # 2. PANTALLA DE INICIO DE SESIÓN
 if 'user' not in st.session_state:
@@ -61,16 +66,16 @@ else:
     
     saldo_disp = int(float(df.at[idx_u, 'Saldo']))
     sc_disp = int(float(df.at[idx_u, 'SC']))
-    sueldo_sem = calcular_sueldo(sc_disp)
+    sueldo_oficial = calcular_sueldo(sc_disp)
     
     c1, c2, c3 = st.columns(3)
     c1.metric("Saldo", f"{saldo_disp} OI")
     c2.metric("Social Credit", f"{sc_disp} pts")
-    c3.metric("Sueldo Semanal", f"{sueldo_sem} OI")
+    c3.metric("Sueldo Semanal", f"{sueldo_oficial} OI")
 
     st.divider()
 
-    # MENÚ DE OPCIONES (He quitado la pestaña de Seguridad/PIN)
+    # MENÚ DE OPCIONES
     pestanas = st.tabs(["💸 Bizum", "💵 Sacar Efectivo", "🚪 Salir"])
 
     with pestanas[0]: # BIZUM
@@ -135,8 +140,8 @@ else:
                 guardar(df)
 
         with admin_opciones[2]: # PAGAR SUELDOS
-            sueldo_estado = calcular_sueldo(df.at[idx_t, 'SC'])
-            if st.button(f"Pagar Sueldo Semanal ({sueldo_estado} OI)"):
+            sueldo_corregido = calcular_sueldo(df.at[idx_t, 'SC'])
+            if st.button(f"Pagar Sueldo Semanal ({sueldo_corregido} OI)"):
                 saldo_t_actual = int(float(df.at[idx_t, 'Saldo']))
-                df.at[idx_t, 'Saldo'] = saldo_t_actual + sueldo_estado
+                df.at[idx_t, 'Saldo'] = saldo_t_actual + sueldo_corregido
                 guardar(df)
