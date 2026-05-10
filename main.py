@@ -5,32 +5,34 @@ import pandas as pd
 # Configuración de página
 st.set_page_config(page_title="Banco O.I.M.C.", page_icon="🏛️")
 
-# 1. CONEXIÓN Y CARGA DE DATOS
+# 1. CONEXIÓN Y CARGA DE DATOS (ttl=0 para evitar que se quede pillado el saldo)
 conn = st.connection("gsheets", type=GSheetsConnection)
 
 def cargar_datos():
+    # El ttl=0 es la clave para que lea el Excel en tiempo real
     data = conn.read(ttl=0)
-    data.columns = data.columns.str.strip() # Limpia espacios
+    data.columns = data.columns.str.strip() 
     return data
 
 df = cargar_datos()
 
-# Función para guardar cambios en el Excel automáticamente
-def actualizar_excel(nuevo_df):
+# Función para guardar cambios y FORZAR actualización visual
+def actualizar_y_recargar(nuevo_df):
     conn.update(data=nuevo_df)
-    st.cache_data.clear()
+    st.cache_data.clear() # Borra la memoria temporal
+    st.rerun() # Reinicia la web para mostrar los nuevos datos
 
 # Función para calcular sueldo por SC
 def calc_sueldo(sc):
     try:
-        sc_val = int(sc)
+        sc_val = int(float(sc))
         if sc_val >= 90: return 10
         elif sc_val >= 70: return 7
         elif sc_val >= 50: return 4
         else: return 0
     except: return 0
 
-# 2. PANTALLA DE INICIO DE SESIÓN
+# 2. LOGIN
 if 'user' not in st.session_state:
     st.title("🏛️ Tu cuenta bancaria de la OIMC")
     st.subheader("Iniciar Sesión")
@@ -48,121 +50,89 @@ if 'user' not in st.session_state:
                 st.rerun()
             else:
                 st.error("❌ PIN incorrecto")
-        else:
-            st.warning("Selecciona un usuario")
 
-# 3. PANEL DE USUARIO LOGUEADO
+# 3. PANEL DE USUARIO
 else:
     u_id = st.session_state.user
+    # Volvemos a buscar el índice por si los datos han cambiado
     idx = df[df['Usuario'] == u_id].index[0]
     
     st.title(f"👋 Hola, {u_id}")
     
-    # Visualización de datos (Números redondos)
-    col1, col2, col3 = st.columns(3)
+    # Datos en números redondos
     saldo_actual = int(float(df.at[idx, 'Saldo']))
     sc_actual = int(float(df.at[idx, 'SC']))
     
+    col1, col2, col3 = st.columns(3)
     col1.metric("Tu Saldo", f"{saldo_actual} OI")
     col2.metric("Social Credit", f"{sc_actual} pts")
     col3.metric("Sueldo Semanal", f"{calc_sueldo(sc_actual)} OI")
 
     st.divider()
 
-    # OPCIONES DE USUARIO
     menu = st.tabs(["💸 Bizum", "💵 Sacar Efectivo", "🔐 Seguridad", "⚙️ Ajustes"])
 
     with menu[0]: # BIZUM
-        st.subheader("Enviar dinero (Bizum)")
         destinatarios = [u for u in df['Usuario'].tolist() if u != u_id]
         dest = st.selectbox("¿A quién envías?", destinatarios)
-        monto = st.number_input("Cantidad a enviar", min_value=1, step=1, key="bizum_val")
-        
+        monto = st.number_input("Cantidad", min_value=1, step=1, key="bz")
         if st.button("Confirmar Bizum"):
             if saldo_actual >= monto:
                 df.at[idx, 'Saldo'] = saldo_actual - monto
                 dest_idx = df[df['Usuario'] == dest].index[0]
                 df.at[dest_idx, 'Saldo'] = int(float(df.at[dest_idx, 'Saldo'])) + monto
-                actualizar_excel(df)
-                st.success(f"✅ ¡Enviados {monto} OI a {dest}!")
-                st.rerun()
+                actualizar_y_recargar(df)
             else:
-                st.error("No tienes suficiente saldo.")
+                st.error("Saldo insuficiente")
 
-    with menu[1]: # SACAR EFECTIVO
-        st.subheader("Retirar dinero en efectivo")
-        st.info("Al sacar dinero, se restará de tu cuenta digital. Juan te entregará las OI físicas.")
-        monto_cash = st.number_input("¿Cuánto quieres sacar?", min_value=1, step=1, key="cash_val")
-        
+    with menu[1]: # SACAR EFECTIVO (Arreglado)
+        st.info("El dinero se restará de tu cuenta ahora y Juan te lo dará en físico.")
+        monto_cash = st.number_input("Cantidad a retirar", min_value=1, step=1, key="cs")
         if st.button("Sacar en Efectivo"):
             if saldo_actual >= monto_cash:
+                # Restamos y enviamos al Excel inmediatamente
                 df.at[idx, 'Saldo'] = saldo_actual - monto_cash
-                actualizar_excel(df)
-                st.balloons()
-                st.success(f"✅ Has retirado {monto_cash} OI. ¡Avisa a Juan para que te las entregue!")
-                # Esto crea una nota temporal en la sesión para que Juan la vea
-                if 'avisos' not in st.session_state: st.session_state.avisos = []
-                st.session_state.avisos.append(f"🔔 {u_id} ha sacado {monto_cash} OI en efectivo.")
+                actualizar_y_recargar(df)
+                st.success("¡Hecho! Avisa a Juan.")
             else:
-                st.error("No tienes suficiente saldo.")
+                st.error("Saldo insuficiente")
 
-    with menu[2]: # SEGURIDAD (CAMBIAR PIN)
-        st.subheader("Cambiar mi PIN")
-        nuevo_pin = st.text_input("Nuevo PIN (4 números)", max_chars=4, type="password")
-        if st.button("Guardar nuevo PIN"):
-            if len(nuevo_pin) == 4 and nuevo_pin.isdigit():
+    with menu[2]: # CAMBIAR PIN
+        nuevo_pin = st.text_input("Nuevo PIN", max_chars=4, type="password")
+        if st.button("Guardar PIN"):
+            if len(nuevo_pin) == 4:
                 df.at[idx, 'PIN'] = nuevo_pin
-                actualizar_excel(df)
-                st.success("¡PIN cambiado correctamente!")
-            else:
-                st.error("El PIN debe ser de 4 números.")
+                actualizar_y_recargar(df)
 
-    with menu[3]: # CERRAR SESIÓN
+    with menu[3]:
         if st.button("Cerrar Sesión"):
             del st.session_state.user
             st.rerun()
 
-    # 4. PANEL EXCLUSIVO PARA JUAN (ADMINISTRADOR)
-    es_admin = str(df.at[idx, 'Rol']).strip().lower() == "admin"
-    if es_admin:
+    # 4. PANEL JUAN (ADMIN)
+    if str(df.at[idx, 'Rol']).strip().lower() == "admin":
         st.divider()
-        st.header("👑 Panel de Administrador")
-        
-        # Mostrar avisos de efectivo si existen en esta sesión
-        if 'avisos' in st.session_state and st.session_state.avisos:
-            st.warning("⚠️ RETIRADAS PENDIENTES:")
-            for aviso in st.session_state.avisos:
-                st.write(aviso)
-            if st.button("Limpiar Avisos"):
-                st.session_state.avisos = []
-                st.rerun()
-
-        ciudadano = st.selectbox("Ciudadano a gestionar", df['Usuario'].tolist())
+        st.header("👑 Panel de Gobernador")
+        ciudadano = st.selectbox("Gestionar ciudadano:", df['Usuario'].tolist())
         c_idx = df[df['Usuario'] == ciudadano].index[0]
-
-        admin_tabs = st.tabs(["💰 Impuestos", "⭐ Ajustar SC", "🏦 Pagar Sueldos"])
-
-        with admin_tabs[0]: # COBRAR IMPUESTOS
-            impuesto = st.number_input("Monto impuesto", min_value=1, step=1)
+        
+        adm_tabs = st.tabs(["💰 Impuestos", "⭐ Social Credit", "🏦 Sueldos"])
+        
+        with adm_tabs[0]: # IMPUESTOS
+            m_imp = st.number_input("Monto", min_value=1, step=1)
             if st.button(f"Cobrar a {ciudadano}"):
-                df.at[c_idx, 'Saldo'] = int(float(df.at[c_idx, 'Saldo'])) - impuesto
-                df.at[idx, 'Saldo'] = int(float(df.at[idx, 'Saldo'])) + impuesto
-                actualizar_excel(df)
-                st.success(f"Impuesto cobrado. Los {impuesto} OI han ido a tu cuenta.")
-                st.rerun()
+                df.at[c_idx, 'Saldo'] = int(float(df.at[c_idx, 'Saldo'])) - m_imp
+                df.at[idx, 'Saldo'] = int(float(df.at[idx, 'Saldo'])) + m_imp
+                actualizar_y_recargar(df)
 
-        with admin_tabs[1]: # AJUSTAR SC
-            nuevo_sc = st.slider("Nivel de Social Credit", 0, 100, int(float(df.at[c_idx, 'SC'])))
-            if st.button("Guardar Social Credit"):
-                df.at[c_idx, 'SC'] = nuevo_sc
-                actualizar_excel(df)
-                st.success(f"SC de {ciudadano} actualizado a {nuevo_sc}")
-                st.rerun()
+        with adm_tabs[1]: # SC
+            n_sc = st.slider("Nivel", 0, 100, int(float(df.at[c_idx, 'SC'])))
+            if st.button("Actualizar SC"):
+                df.at[c_idx, 'SC'] = n_sc
+                actualizar_y_recargar(df)
 
-        with admin_tabs[2]: # PAGAR SUELDOS
-            sueldo_a_pagar = calc_sueldo(df.at[c_idx, 'SC'])
-            if st.button(f"Pagar Sueldo ({sueldo_a_pagar} OI)"):
-                df.at[c_idx, 'Saldo'] = int(float(df.at[c_idx, 'Saldo'])) + sueldo_a_pagar
-                actualizar_excel(df)
-                st.success(f"Sueldo de {sueldo_a_pagar} OI pagado a {ciudadano}.")
-                st.rerun()
+        with adm_tabs[2]: # SUELDOS
+            s_pagar = calc_sueldo(df.at[c_idx, 'SC'])
+            if st.button(f"Pagar {s_pagar} OI"):
+                df.at[c_idx, 'Saldo'] = int(float(df.at[c_idx, 'Saldo'])) + s_pagar
+                actualizar_y_recargar(df)
