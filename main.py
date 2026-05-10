@@ -1,125 +1,128 @@
 import streamlit as st
+from streamlit_gsheets import GSheetsConnection
+import pandas as pd
 import math
 
 # 1. CONFIGURACIÓN DE LA PÁGINA
-st.set_page_config(page_title="O.I.M.C. Banco Central", page_icon="🏛️", layout="wide")
+st.set_page_config(page_title="O.I.M.C. Banco Real", page_icon="🏛️", layout="wide")
 
-# 2. INICIALIZACIÓN DE LA BASE DE DATOS (Se ejecuta al cargar la app)
-if 'usuarios' not in st.session_state:
-    st.session_state.usuarios = {
-        "Juan": {"pin": "2325", "saldo": 10, "sc": 100, "rol": "admin"},
-        "Asier": {"pin": "0084", "saldo": 10, "sc": 70, "rol": "user"},
-        "Erika": {"pin": "0080", "saldo": 10, "sc": 70, "rol": "user"},
-        "Nahia": {"pin": "0987", "saldo": 10, "sc": 70, "rol": "user"},
-        "Gaizka": {"pin": "2100", "saldo": 10, "sc": 70, "rol": "user"},
-        "Mikel": {"pin": "0870", "saldo": 10, "sc": 70, "rol": "user"},
-        "Yolanda": {"pin": "2000", "saldo": 10, "sc": 70, "rol": "user"},
-        "Jesús": {"pin": "0010", "saldo": 10, "sc": 70, "rol": "user"},
-        "Iñaki": {"pin": "9999", "saldo": 10, "sc": 20, "rol": "user"}
-    }
+# 2. CONEXIÓN A GOOGLE SHEETS
+# PEGA AQUÍ TU ENLACE DE GOOGLE SHEETS
+url = "TU_URL_DE_GOOGLE_SHEETS_AQUÍ"
+conn = st.connection("gsheets", type=GSheetsConnection)
 
-# Lógica de la tabla salarial de la foto
+def cargar_datos():
+    # Lee la hoja de cálculo
+    return conn.read(spreadsheet=url, ttl="0s")
+
+def actualizar_bd(df):
+    # Guarda los cambios en Google Sheets
+    conn.update(spreadsheet=url, data=df)
+    st.cache_data.clear()
+
+# Cargar datos en la sesión
+if 'df' not in st.session_state:
+    st.session_state.df = cargar_datos()
+
+# Lógica salarial
 def calcular_sueldo(sc):
     if sc >= 90: return 5
     elif sc >= 70: return 4
     elif sc >= 50: return 2
     else: return 0
 
-# 3. SISTEMA DE LOGIN
+# 3. LOGIN
 if 'logeado' not in st.session_state:
     st.title("🏛️ O.I.M.C. - Iniciar Sesión")
-    nombre_login = st.selectbox("Selecciona tu cuenta", list(st.session_state.usuarios.keys()))
+    lista_usuarios = st.session_state.df["Usuario"].tolist()
+    nombre_login = st.selectbox("Selecciona tu cuenta", lista_usuarios)
     pin_login = st.text_input("Introduce tu PIN", type="password")
     
     if st.button("Acceder"):
-        if st.session_state.usuarios[nombre_login]["pin"] == pin_login:
+        pin_real = str(st.session_state.df.loc[st.session_state.df["Usuario"] == nombre_login, "PIN"].values[0])
+        if pin_login == pin_real:
             st.session_state.logeado = nombre_login
             st.rerun()
         else:
             st.error("PIN incorrecto.")
 else:
     u_id = st.session_state.logeado
-    user_data = st.session_state.usuarios[u_id]
+    # Obtener fila del usuario actual
+    user_row = st.session_state.df[st.session_state.df["Usuario"] == u_id]
 
-    # --- BARRA LATERAL (Izquierda) ---
+    # BARRA LATERAL
     with st.sidebar:
         st.title(f"👤 {u_id}")
         if st.button("Cerrar Sesión"):
             del st.session_state.logeado
             st.rerun()
-        
         st.divider()
-        st.subheader("⚙️ Configuración")
-        nuevo_pin = st.text_input("Nuevo PIN (4 dígitos)", type="password", max_chars=4)
+        nuevo_pin = st.text_input("Cambiar PIN", type="password", max_chars=4)
         if st.button("Actualizar PIN"):
-            st.session_state.usuarios[u_id]["pin"] = nuevo_pin
-            st.success("PIN actualizado correctamente.")
+            st.session_state.df.loc[st.session_state.df["Usuario"] == u_id, "PIN"] = nuevo_pin
+            actualizar_bd(st.session_state.df)
+            st.success("PIN guardado en la nube.")
 
-    # --- CUERPO PRINCIPAL ---
+    # CUERPO PRINCIPAL
     st.title("📊 Mi Cuenta Bancaria")
     
-    # Métricas principales
     col1, col2, col3 = st.columns(3)
-    saldo_actual = st.session_state.usuarios[u_id]["saldo"]
-    sc_actual = st.session_state.usuarios[u_id]["sc"]
-    sueldo_prev = calcular_sueldo(sc_actual)
+    saldo = int(user_row["Saldo"].values[0])
+    sc = int(user_row["SC"].values[0])
+    sueldo_prev = calcular_sueldo(sc)
     
-    col1.metric("Saldo Disponible", f"{saldo_actual} OI")
-    col2.metric("Social Credit", f"{sc_actual} SC")
+    col1.metric("Saldo Disponible", f"{saldo} OI")
+    col2.metric("Social Credit", f"{sc} SC")
     col3.metric("Sueldo Próximo", f"{sueldo_prev} OI")
 
     st.divider()
 
-    # SECCIÓN ENVIAR FONDOS
+    # ENVIAR FONDOS
     st.subheader("💸 Enviar Fondos")
-    destinatario = st.selectbox("Enviar a:", [n for n in st.session_state.usuarios.keys() if n != u_id])
-    max_posible = int(saldo_actual) if saldo_actual > 0 else 0
-    cantidad = st.number_input("Cantidad de OI", min_value=1, max_value=max_posible if max_posible > 0 else 1, step=1)
+    destinatario = st.selectbox("Enviar a:", [n for n in st.session_state.df["Usuario"].tolist() if n != u_id])
+    cantidad = st.number_input("Cantidad", min_value=1, max_value=max(1, saldo), step=1)
     
     if st.button("Confirmar Envío"):
-        if st.session_state.usuarios[u_id]["saldo"] >= cantidad:
-            st.session_state.usuarios[u_id]["saldo"] -= int(cantidad)
-            st.session_state.usuarios[destinatario]["saldo"] += int(cantidad)
-            st.success(f"Has enviado {int(cantidad)} OI a {destinatario}.")
+        if saldo >= cantidad:
+            # Restar al emisor y sumar al receptor en el DataFrame
+            st.session_state.df.loc[st.session_state.df["Usuario"] == u_id, "Saldo"] -= cantidad
+            st.session_state.df.loc[st.session_state.df["Usuario"] == destinatario, "Saldo"] += cantidad
+            actualizar_bd(st.session_state.df)
+            st.success(f"Transferencia de {cantidad} OI enviada y guardada.")
             st.rerun()
-        else:
-            st.error("Saldo insuficiente.")
 
-    # --- PANEL EXCLUSIVO DE JUAN (ADMIN) ---
-    if u_id == "Juan":
+    # HERRAMIENTAS DE JUAN (ADMIN)
+    rol = user_row["Rol"].values[0]
+    if rol == "admin":
         st.divider()
         st.header("👑 Herramientas de Gobernador")
-        
-        opcion_admin = st.radio("Acción:", ["Pagar Sueldos", "Cobrar Impuestos", "Cambiar Social Credit"], horizontal=True)
+        accion = st.radio("Acción:", ["Pagar Sueldos", "Cobrar Impuestos", "Cambiar SC"], horizontal=True)
 
-        if opcion_admin == "Pagar Sueldos":
-            st.subheader("💰 Pago Global de Nóminas")
-            st.write("Se ingresará el sueldo automático a cada miembro según la tabla oficial.")
-            if st.button("EJECUTAR PAGOS"):
-                for nombre in st.session_state.usuarios:
-                    pago = calcular_sueldo(st.session_state.usuarios[nombre]["sc"])
-                    st.session_state.usuarios[nombre]["saldo"] += pago
-                st.success("Sueldos pagados satisfactoriamente.")
+        if accion == "Pagar Sueldos":
+            if st.button("PAGAR NÓMINAS GLOBALES"):
+                for index, row in st.session_state.df.iterrows():
+                    pago = calcular_sueldo(row["SC"])
+                    st.session_state.df.at[index, "Saldo"] += pago
+                actualizar_bd(st.session_state.df)
+                st.success("Sueldos pagados y guardados en Google Sheets.")
                 st.rerun()
 
-        elif opcion_admin == "Cobrar Impuestos":
-            st.subheader("⚖️ Recaudación para el Tesoro Real")
-            # Solo deja elegir a otros que no sean Juan
-            sujeto_imp = st.selectbox("Seleccionar ciudadano:", [n for n in st.session_state.usuarios.keys() if n != "Juan"])
-            monto_imp = st.number_input("Monto de impuestos (OI)", min_value=1, value=1, step=1)
-            
-            if st.button(f"Cobrar a {sujeto_imp}"):
-                # El dinero sale del ciudadano y va a Juan
-                st.session_state.usuarios[sujeto_imp]["saldo"] -= int(monto_imp)
-                st.session_state.usuarios["Juan"]["saldo"] += int(monto_imp)
-                st.warning(f"Has recaudado {int(monto_imp)} OI de {sujeto_imp}.")
+        elif accion == "Cobrar Impuestos":
+            sujeto = st.selectbox("Cobrar a:", [n for n in st.session_state.df["Usuario"].tolist() if n != "Juan"])
+            monto = st.number_input("Monto", min_value=1, value=1, step=1)
+            if st.button(f"Cobrar a {sujeto}"):
+                st.session_state.df.loc[st.session_state.df["Usuario"] == sujeto, "Saldo"] -= monto
+                st.session_state.df.loc[st.session_state.df["Usuario"] == "Juan", "Saldo"] += monto
+                actualizar_bd(st.session_state.df)
+                st.warning(f"Impuesto recaudado para el tesoro.")
                 st.rerun()
 
-        elif opcion_admin == "Cambiar Social Credit":
-            st.subheader("📈 Gestión de Estatus")
-            sujeto_sc = st.selectbox("Elegir ciudadano:", list(st.session_state.usuarios.keys()))
-            sc_nuevo = st.slider("Nuevo Social Credit", 0, 100, int(st.session_state.usuarios[sujeto_sc]["sc"]))
-            if st.button(f"Actualizar SC de {sujeto_sc}"):
-                st.session_state.usuarios[sujeto_sc]["sc"] = sc_nuevo
-                st.success(f"Social Credit de {sujeto_sc} actualizado a {sc_nuevo}.")
+        elif accion == "Cambiar SC":
+            sujeto_sc = st.selectbox("Elegir ciudadano:", st.session_state.df["Usuario"].tolist())
+            sc_actual_val = int(st.session_state.df.loc[st.session_state.df["Usuario"] == sujeto_sc, "SC"].values[0])
+            nuevo_sc = st.slider("Nuevo SC", 0, 100, sc_actual_val)
+            if st.button("Actualizar Estatus"):
+                st.session_state.df.loc[st.session_state.df["Usuario"] == sujeto_sc, "SC"] = nuevo_sc
+                actualizar_bd(st.session_state.df)
+                st.success("Estatus actualizado.")
                 st.rerun()
