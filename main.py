@@ -7,13 +7,13 @@ st.set_page_config(page_title="O.I.M.C. Banco Central", page_icon="🏛️", lay
 if 'usuarios' not in st.session_state:
     st.session_state.usuarios = {
         "Juan": {"pin": "2325", "saldo": 10, "sc": 100, "rol": "admin"},
-        "Asier": {"pin": "0000", "saldo": 10, "sc": 70, "rol": "user"},
-        "Erika": {"pin": "0000", "saldo": 10, "sc": 70, "rol": "user"},
-        "Nahia": {"pin": "0000", "saldo": 10, "sc": 70, "rol": "user"},
-        "Gaizka": {"pin": "0000", "saldo": 10, "sc": 70, "rol": "user"},
-        "Mikel": {"pin": "0000", "saldo": 10, "sc": 70, "rol": "user"},
-        "Yolanda": {"pin": "0000", "saldo": 10, "sc": 70, "rol": "user"},
-        "Jesús": {"pin": "0000", "saldo": 10, "sc": 70, "rol": "user"},
+        "Asier": {"pin": "2020", "saldo": 10, "sc": 70, "rol": "user"},
+        "Erika": {"pin": "2014", "saldo": 10, "sc": 70, "rol": "user"},
+        "Nahia": {"pin": "9370", "saldo": 10, "sc": 70, "rol": "user"},
+        "Gaizka": {"pin": "0088", "saldo": 10, "sc": 70, "rol": "user"},
+        "Mikel": {"pin": "0234", "saldo": 10, "sc": 70, "rol": "user"},
+        "Yolanda": {"pin": "0400", "saldo": 10, "sc": 70, "rol": "user"},
+        "Jesús": {"pin": "9730", "saldo": 10, "sc": 70, "rol": "user"},
         "Iñaki": {"pin": "9999", "saldo": 10, "sc": 20, "rol": "user"}
     }
 
