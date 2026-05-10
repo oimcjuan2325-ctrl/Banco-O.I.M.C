@@ -2,70 +2,157 @@ import streamlit as st
 from streamlit_gsheets import GSheetsConnection
 import pandas as pd
 
-# 1. CONEXIÓN (ttl=0 para tiempo real)
+# Configuración de la web
+st.set_page_config(page_title="Banco Central O.I.M.C.", page_icon="🏛️")
+
+# 1. CONEXIÓN Y LECTURA DE DATOS (Sin caché para tiempo real)
 conn = st.connection("gsheets", type=GSheetsConnection)
 
 def cargar_datos():
     data = conn.read(ttl=0)
-    data.columns = data.columns.str.strip() 
+    data.columns = data.columns.str.strip() # Elimina espacios en los títulos
     return data
 
 df = cargar_datos()
 
-# FUNCIÓN MAESTRA PARA GUARDAR CAMBIOS
-def guardar_en_excel(dataframe_actualizado):
+# Función para guardar cambios en el Excel
+def guardar(nuevo_df):
+    conn.update(data=nuevo_df)
+    st.cache_data.clear()
+    st.rerun()
+
+# Función para calcular el sueldo semanal basado en Social Credit (SC)
+def calcular_sueldo(sc_puntos):
     try:
-        conn.update(data=dataframe_actualizado)
-        st.cache_data.clear()
-        st.success("✅ Datos sincronizados con el Excel")
-        st.rerun()
-    except Exception as e:
-        st.error(f"Error al guardar: {e}. Revisa si el email del banco tiene permiso de EDITOR en el Excel.")
+        val = int(float(sc_puntos))
+        if val >= 90: return 10
+        elif val >= 70: return 7
+        elif val >= 50: return 4
+        else: return 0
+    except: return 0
 
-# LOGIN Y LÓGICA (Simplificada para que no falle)
+# 2. PANTALLA DE INICIO DE SESIÓN
 if 'user' not in st.session_state:
-    st.title("🏛️ Banco OIMC")
-    user_list = df['Usuario'].tolist()
-    user_input = st.selectbox("Usuario", user_list)
-    pin_input = st.text_input("PIN", type="password")
+    st.title("🏛️ Tu cuenta bancaria de la OIMC")
+    st.subheader("Iniciar Sesión")
     
-    if st.button("Entrar"):
-        idx = df[df['Usuario'] == user_input].index[0]
-        pin_real = str(df.at[idx, 'PIN']).split('.')[0].strip()
-        if pin_real == pin_input.strip():
-            st.session_state.user = user_input
-            st.rerun()
-        else:
-            st.error("PIN incorrecto")
-else:
-    u_id = st.session_state.user
-    idx = df[df['Usuario'] == u_id].index[0]
+    usuarios = df['Usuario'].tolist()
+    user_sel = st.selectbox("Selecciona tu cuenta", ["---"] + usuarios)
+    pin_ingresado = st.text_input("Introduce tu PIN", type="password")
     
-    st.header(f"Hola, {u_id}")
-    saldo = int(float(df.at[idx, 'Saldo']))
-    st.metric("Saldo", f"{saldo} OI")
-
-    tabs = st.tabs(["💸 Bizum", "💵 Efectivo", "🔐 PIN", "🚪 Salir"])
-
-    with tabs[2]: # Cambio de PIN (Aquí estaba el error)
-        st.subheader("Nuevo PIN")
-        n_pin = st.text_input("Escribe 4 números", max_chars=4)
-        if st.button("Actualizar PIN"):
-            if len(n_pin) == 4 and n_pin.isdigit():
-                # Actualizamos localmente
-                df.at[idx, 'PIN'] = n_pin
-                # Guardamos en el Excel
-                guardar_en_excel(df)
+    if st.button("Acceder"):
+        if user_sel != "---":
+            idx = df[df['Usuario'] == user_sel].index[0]
+            # Limpiamos el PIN del Excel por si tiene decimales
+            pin_real = str(df.at[idx, 'PIN']).split('.')[0].strip()
+            if pin_real == pin_ingresado.strip():
+                st.session_state.user = user_sel
+                st.rerun()
             else:
-                st.warning("El PIN debe ser de 4 dígitos.")
+                st.error("❌ PIN incorrecto")
+        else:
+            st.warning("Por favor, selecciona un usuario.")
+
+# 3. INTERFAZ DE USUARIO LOGUEADO
+else:
+    nombre_usuario = st.session_state.user
+    idx_u = df[df['Usuario'] == nombre_usuario].index[0]
     
-    with tabs[3]:
-        if st.button("Cerrar Sesión"):
+    st.title(f"Hola, {nombre_usuario} 👋")
+    
+    # Datos principales (Números redondos)
+    saldo_disp = int(float(df.at[idx_u, 'Saldo']))
+    sc_disp = int(float(df.at[idx_u, 'SC']))
+    sueldo_sem = calcular_sueldo(sc_disp)
+    
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Saldo", f"{saldo_disp} OI")
+    c2.metric("Social Credit", f"{sc_disp} pts")
+    c3.metric("Sueldo Semanal", f"{sueldo_sem} OI")
+
+    st.divider()
+
+    # MENÚ DE OPCIONES
+    pestanas = st.tabs(["💸 Bizum", "💵 Efectivo", "🔐 Seguridad", "🚪 Salir"])
+
+    with pestanas[0]: # BIZUM
+        st.subheader("Enviar OI (Bizum)")
+        otros = [u for u in df['Usuario'].tolist() if u != nombre_usuario]
+        receptor = st.selectbox("¿A quién envías?", otros)
+        cantidad = st.number_input("Cantidad a enviar", min_value=1, step=1)
+        
+        if st.button("Confirmar Bizum"):
+            if saldo_disp >= cantidad:
+                # Restar al que envía
+                df.at[idx_u, 'Saldo'] = saldo_disp - cantidad
+                # Sumar al que recibe
+                idx_rec = df[df['Usuario'] == receptor].index[0]
+                saldo_rec = int(float(df.at[idx_rec, 'Saldo']))
+                df.at[idx_rec, 'Saldo'] = saldo_rec + cantidad
+                guardar(df)
+            else:
+                st.error("No tienes suficiente saldo para este Bizum.")
+
+    with pestanas[1]: # SACAR EFECTIVO
+        st.subheader("Retirar dinero físico")
+        st.info("El dinero se restará de tu cuenta digital y Juan te lo dará en mano.")
+        monto_retirar = st.number_input("¿Cuánto quieres sacar?", min_value=1, step=1)
+        
+        if st.button("Retirar Efectivo"):
+            if saldo_disp >= monto_retirar:
+                df.at[idx_u, 'Saldo'] = saldo_disp - monto_retirar
+                guardar(df)
+                st.success(f"Has retirado {monto_retirar} OI. ¡Avisa a Juan!")
+            else:
+                st.error("Saldo insuficiente.")
+
+    with pestanas[2]: # CAMBIAR PIN
+        st.subheader("Cambiar mi contraseña")
+        nuevo_pin = st.text_input("Nuevo PIN (4 números)", max_chars=4, type="password")
+        if st.button("Actualizar PIN"):
+            if len(nuevo_pin) == 4 and nuevo_pin.isdigit():
+                df.at[idx_u, 'PIN'] = nuevo_pin
+                guardar(df)
+            else:
+                st.warning("El PIN debe ser de exactamente 4 números.")
+
+    with pestanas[3]: # CERRAR SESIÓN
+        if st.button("Finalizar Sesión"):
             del st.session_state.user
             st.rerun()
 
-    # PANEL ADMIN
-    if str(df.at[idx, 'Rol']).lower() == "admin":
+    # 4. PANEL EXCLUSIVO PARA JUAN (ADMIN)
+    es_admin = str(df.at[idx_u, 'Rol']).strip().lower() == "admin"
+    if es_admin:
         st.divider()
-        st.subheader("👑 Panel Gobernador")
-        # Aquí puedes añadir las funciones de impuestos y SC que ya teníamos
+        st.header("👑 Panel de Gobernador")
+        
+        target = st.selectbox("Selecciona Ciudadano", df['Usuario'].tolist())
+        idx_t = df[df['Usuario'] == target].index[0]
+        
+        admin_opciones = st.tabs(["💰 Impuestos", "⭐ Ajustar SC", "🏦 Pagar Sueldo"])
+        
+        with admin_opciones[0]: # COBRAR IMPUESTOS
+            monto_imp = st.number_input("Cantidad de Impuesto", min_value=1, step=1)
+            if st.button(f"Cobrar Impuesto a {target}"):
+                # Quitar al ciudadano
+                saldo_t = int(float(df.at[idx_t, 'Saldo']))
+                df.at[idx_t, 'Saldo'] = saldo_t - monto_imp
+                # Sumar a Juan
+                saldo_juan = int(float(df.at[idx_u, 'Saldo']))
+                df.at[idx_u, 'Saldo'] = saldo_juan + monto_imp
+                guardar(df)
+
+        with admin_opciones[1]: # AJUSTAR SC
+            sc_actual_t = int(float(df.at[idx_t, 'SC']))
+            nuevo_sc_val = st.slider("Ajustar Social Credit", 0, 100, sc_actual_t)
+            if st.button("Guardar Social Credit"):
+                df.at[idx_t, 'SC'] = nuevo_sc_val
+                guardar(df)
+
+        with admin_opciones[2]: # PAGAR SUELDOS (Del Estado)
+            sueldo_estado = calcular_sueldo(df.at[idx_t, 'SC'])
+            if st.button(f"Pagar Sueldo Semanal ({sueldo_estado} OI)"):
+                saldo_t_actual = int(float(df.at[idx_t, 'Saldo']))
+                df.at[idx_t, 'Saldo'] = saldo_t_actual + sueldo_estado
+                guardar(df)
