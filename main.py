@@ -9,7 +9,7 @@ if 'usuarios' not in st.session_state:
     st.session_state.usuarios = {
         "Juan": {"pin": "2325", "saldo": 10, "sc": 100, "rol": "admin"},
         "Asier": {"pin": "2020", "saldo": 10, "sc": 80, "rol": "user"},
-        "Erika": {"pin": "2013, "saldo": 10, "sc": 80, "rol": "user"},
+        "Erika": {"pin": "2013", "saldo": 10, "sc": 80, "rol": "user"},
         "Nahia": {"pin": "9389", "saldo": 10, "sc": 80, "rol": "user"},
         "Gaizka": {"pin": "2932", "saldo": 10, "sc": 80, "rol": "user"},
         "Mikel": {"pin": "2048", "saldo": 10, "sc": 80, "rol": "user"},
