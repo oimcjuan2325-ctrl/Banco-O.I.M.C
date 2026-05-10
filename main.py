@@ -6,92 +6,85 @@ import pandas as pd
 st.set_page_config(page_title="O.I.M.C. Banco", page_icon="🏛️")
 conn = st.connection("gsheets", type=GSheetsConnection)
 
-# Cargar datos asegurando que el PIN sea siempre texto para evitar el TypeError
 def cargar():
+    # Leemos y forzamos TODO a ser texto/número limpio para que no haya líos de tipos
     data = conn.read(ttl=0)
-    data['PIN'] = data['PIN'].astype(str) # Forzamos PIN a texto
     return data
 
 if 'df' not in st.session_state:
     st.session_state.df = cargar()
 
 # 2. LOGIN
+df_actual = st.session_state.df.copy()
+
 if 'user' not in st.session_state:
     st.title("🏛️ Acceso O.I.M.C.")
-    u = st.selectbox("Usuario", st.session_state.df["Usuario"].tolist())
+    u = st.selectbox("Usuario", df_actual["Usuario"].tolist())
     p = st.text_input("PIN", type="password")
     if st.button("Entrar"):
-        real_p = str(st.session_state.df.loc[st.session_state.df["Usuario"] == u, "PIN"].values[0])
-        if p == real_p:
+        # Comprobación de seguridad comparando como strings
+        real_p = str(df_actual.loc[df_actual["Usuario"] == u, "PIN"].values[0]).strip()
+        if str(p).strip() == real_p:
             st.session_state.user = u
             st.rerun()
+        else:
+            st.error("PIN Incorrecto")
 else:
     u_id = st.session_state.user
-    df = st.session_state.df.copy() # Usamos una copia para evitar errores
-    idx_yo = df[df["Usuario"] == u_id].index[0]
+    idx_yo = df_actual[df_actual["Usuario"] == u_id].index[0]
 
-    # BARRA LATERAL (CERRAR Y PIN)
+    # BARRA LATERAL
     with st.sidebar:
-        st.write(f"Conectado como: **{u_id}**")
+        st.write(f"👤 **{u_id}**")
         if st.button("Cerrar Sesión"):
             del st.session_state.user
             st.rerun()
         st.divider()
-        st.subheader("🔐 Seguridad")
+        st.subheader("🔐 Cambiar PIN")
         n_p = st.text_input("Nuevo PIN", type="password", max_chars=4)
-        if st.button("Actualizar PIN"):
+        if st.button("Guardar PIN"):
             if n_p:
-                df.at[idx_yo, "PIN"] = str(n_p)
-                conn.update(data=df)
-                st.session_state.df = df
-                st.success("¡PIN guardado!")
+                # Actualizamos el valor asegurándonos de que sea un string limpio
+                df_actual.at[idx_yo, "PIN"] = str(n_p)
+                conn.update(data=df_actual)
+                st.session_state.df = df_actual
+                st.success("¡PIN actualizado!")
                 st.rerun()
 
     # 3. INTERFAZ PRINCIPAL
-    st.title(f"Saldo: {int(df.at[idx_yo, 'Saldo'])} OI")
-    st.subheader(f"Social Credit: {int(df.at[idx_yo, 'SC'])}")
+    saldo_v = df_actual.at[idx_yo, 'Saldo']
+    sc_v = df_actual.at[idx_yo, 'SC']
+    
+    st.title(f"Saldo: {int(saldo_v)} OI")
+    st.subheader(f"Social Credit: {int(sc_v)}")
 
-    st.divider()
-
-    # COBRAR IMPUESTO (SOLO JUAN)
-    if df.at[idx_yo, "Rol"] == "admin":
+    # 4. HERRAMIENTAS DE JUAN (IMPUESTOS)
+    if str(df_actual.at[idx_yo, "Rol"]) == "admin":
+        st.divider()
         st.header("👑 Panel de Gobernador")
         
-        with st.expander("⚖️ Cobrar Impuesto Rápido"):
-            victima = st.selectbox("Ciudadano:", df["Usuario"].tolist())
-            cuanto = st.number_input("OI a recaudar:", min_value=1, step=1)
-            if st.button("¡COBRAR IMPUESTO!"):
-                idx_v = df[df["Usuario"] == victima].index[0]
-                df.at[idx_v, "Saldo"] -= cuanto
-                df.at[idx_yo, "Saldo"] += cuanto
-                conn.update(data=df)
-                st.session_state.df = df
-                st.warning(f"Recaudados {cuanto} OI de {victima}")
+        with st.expander("⚖️ Cobrar Impuesto"):
+            victima = st.selectbox("Ciudadano:", df_actual["Usuario"].tolist())
+            cuanto = st.number_input("OI a quitar:", min_value=1, step=1)
+            if st.button("EJECUTAR COBRO"):
+                idx_v = df_actual[df_actual["Usuario"] == victima].index[0]
+                df_actual.at[idx_v, "Saldo"] = int(df_actual.at[idx_v, "Saldo"]) - cuanto
+                df_actual.at[idx_yo, "Saldo"] = int(df_actual.at[idx_yo, "Saldo"]) + cuanto
+                conn.update(data=df_actual)
+                st.session_state.df = df_actual
+                st.warning(f"Cobrado a {victima}")
                 st.rerun()
 
-        with st.expander("⚙️ Editar Social Credit / Saldo"):
-            target = st.selectbox("Editar a:", df["Usuario"].tolist())
-            it = df[df["Usuario"] == target].index[0]
-            n_sc = st.slider("Nuevo SC", 0, 100, int(df.at[it, "SC"]))
-            n_sa = st.number_input("Nuevo Saldo", value=int(df.at[it, "Saldo"]))
-            if st.button("Guardar Cambios"):
-                df.at[it, "SC"] = n_sc
-                df.at[it, "Saldo"] = n_sa
-                conn.update(data=df)
-                st.session_state.df = df
-                st.success("Actualizado")
-                st.rerun()
-    
+    # 5. TRANSFERENCIAS
     st.divider()
-    # TRANSFERENCIAS (PARA TODOS)
     st.header("💸 Enviar Dinero")
-    dest = st.selectbox("Enviar a:", [n for n in df["Usuario"].tolist() if n != u_id])
-    cant = st.number_input("Cantidad", min_value=1, max_value=int(df.at[idx_yo, "Saldo"]), step=1)
-    if st.button("Enviar OI"):
-        idx_d = df[df["Usuario"] == dest].index[0]
-        df.at[idx_yo, "Saldo"] -= cant
-        df.at[idx_d, "Saldo"] += cant
-        conn.update(data=df)
-        st.session_state.df = df
-        st.success(f"Enviado con éxito a {dest}")
+    dest = st.selectbox("Destinatario:", [n for n in df_actual["Usuario"].tolist() if n != u_id])
+    cant = st.number_input("Cantidad", min_value=1, max_value=int(saldo_v), step=1)
+    if st.button("Enviar Fondos"):
+        idx_d = df_actual[df_actual["Usuario"] == dest].index[0]
+        df_actual.at[idx_yo, "Saldo"] = int(df_actual.at[idx_yo, "Saldo"]) - cant
+        df_actual.at[idx_d, "Saldo"] = int(df_actual.at[idx_d, "Saldo"]) + cant
+        conn.update(data=df_actual)
+        st.session_state.df = df_actual
+        st.success(f"¡Enviado a {dest}!")
         st.rerun()
