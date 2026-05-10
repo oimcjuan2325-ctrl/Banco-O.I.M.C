@@ -2,72 +2,91 @@ import streamlit as st
 from streamlit_gsheets import GSheetsConnection
 import pandas as pd
 
-# 1. CONEXIÓN RÁPIDA
-st.set_page_config(page_title="O.I.M.C. Banco", layout="wide")
+# 1. CONEXIÓN Y CONFIGURACIÓN
+st.set_page_config(page_title="O.I.M.C. Banco Central", layout="wide")
 conn = st.connection("gsheets", type=GSheetsConnection)
 df = conn.read(ttl=0)
 
-# Lógica de sueldos por SC
+# Lógica oficial de sueldos según Social Credit (SC)
 def calc_sueldo(sc):
-    s = int(sc)
-    if s >= 90: return 5
-    elif s >= 70: return 4
-    elif s >= 50: return 2
-    return 0
+    try:
+        s = int(sc)
+        if s >= 90: return 5
+        elif s >= 70: return 4
+        elif s >= 50: return 2
+        return 0
+    except: return 0
 
-# 2. LOGIN
+# 2. SISTEMA DE LOGIN
 if 'user' not in st.session_state:
-    st.title("🏛️ Banco O.I.M.C.")
-    user = st.selectbox("Usuario", df["Usuario"].tolist())
-    pin = st.text_input("PIN", type="password")
-    if st.button("Entrar"):
-        if pin == str(df.loc[df["Usuario"] == user, "PIN"].values[0]):
+    st.title("🏛️ Banco Central O.I.M.C.")
+    user = st.selectbox("Selecciona tu cuenta", df["Usuario"].tolist())
+    pin = st.text_input("Introduce tu PIN", type="password")
+    if st.button("Acceder"):
+        # Comprobación de PIN
+        pin_real = str(df.loc[df["Usuario"] == user, "PIN"].values[0]).strip()
+        if pin == pin_real:
             st.session_state.user = user
             st.rerun()
+        else:
+            st.error("PIN incorrecto")
 else:
     u_id = st.session_state.user
     idx = df[df["Usuario"] == u_id].index[0]
+    es_admin = str(df.at[idx, "Rol"]) == "admin"
     
-    # DATOS DEL USUARIO
+    # 3. INTERFAZ DE CIUDADANO
     st.header(f"Hola, {u_id}")
-    st.metric("Mi Saldo", f"{df.at[idx, 'Saldo']} OI")
-    st.write(f"Tu SC actual es **{df.at[idx, 'SC']}**. Cobrarás **{calc_sueldo(df.at[idx, 'SC'])} OI**.")
+    col_a, col_b, col_c = st.columns(3)
+    col_a.metric("Saldo Disponible", f"{df.at[idx, 'Saldo']} OI")
+    col_b.metric("Social Credit", f"{df.at[idx, 'SC']} pts")
+    col_c.metric("Próximo Sueldo", f"{calc_sueldo(df.at[idx, 'SC'])} OI")
 
-    # 3. PANEL DE GOBERNADOR (JUAN)
-    if str(df.at[idx, "Rol"]) == "admin":
+    # 4. FUNCIÓN DE BIZUM (TRANSFERENCIAS)
+    st.divider()
+    st.subheader("💸 Enviar OI (Bizum)")
+    # Lista de destinatarios excluyendo al usuario actual
+    destinatarios = [n for n in df["Usuario"].tolist() if n != u_id]
+    dest = st.selectbox("¿A quién quieres enviar dinero?", destinatarios)
+    monto = st.number_input("Cantidad de OI a enviar:", min_value=1, step=1)
+    
+    if st.button("Confirmar Envío"):
+        # Mensaje de confirmación para el usuario y aviso para Juan
+        st.success(f"Solicitud enviada. {u_id}, el Gobernador Juan debe confirmar la transferencia de {monto} OI a {dest}.")
+        st.info(f"🚨 **AVISO PARA JUAN:** Resta {monto} a {u_id} y súmale {monto} a {dest} en el Excel.")
+
+    # 5. PANEL DE GOBERNADOR (EXCLUSIVO PARA JUAN)
+    if es_admin:
         st.divider()
-        st.header("👑 Panel de Juan")
+        st.header("👑 Herramientas de Gobernador (Juan)")
         
-        # ELEGIR CIUDADANO
-        target = st.selectbox("Gestionar a:", df["Usuario"].tolist())
-        t_idx = df[df["Usuario"] == target].index[0]
+        ciudadano = st.selectbox("Seleccionar Ciudadano para gestionar:", df["Usuario"].tolist())
+        c_idx = df[df["Usuario"] == ciudadano].index[0]
         
-        col1, col2 = st.columns(2)
+        tab1, tab2 = st.tabs(["💰 Sueldos e Impuestos", "⚙️ Social Credit y PIN"])
         
-        with col1:
-            st.subheader("💰 Sueldos e Impuestos")
-            op = st.radio("Acción", ["Pagar Sueldo", "Cobrar Impuesto"])
-            if op == "Pagar Sueldo":
-                monto = calc_sueldo(df.at[t_idx, "SC"])
-                st.info(f"Sueldo automático: {monto} OI")
-            else:
-                monto = st.number_input("Monto Impuesto", min_value=1)
+        with tab1:
+            monto_sueldo = calc_sueldo(df.at[c_idx, "SC"])
+            if st.button(f"Pagar Sueldo Automático ({monto_sueldo} OI)"):
+                st.success(f"Juan, ve al Excel y súmale {monto_sueldo} OI a {ciudadano}.")
             
-            if st.button("Realizar Operación"):
-                st.success(f"¡Hecho! Juan, ve al Excel y cambia el saldo de {target}.")
+            st.divider()
+            monto_imp = st.number_input("Monto de Impuesto:", min_value=1, key="impuesto")
+            if st.button(f"Cobrar Impuesto a {ciudadano}"):
+                st.error(f"Juan, en el Excel: Resta {monto_imp} a {ciudadano} y súmatelo a ti.")
 
-        with col2:
-            st.subheader("⚙️ Social Credit")
-            nuevo_sc = st.slider("Nuevo SC", 0, 100, int(df.at[t_idx, "SC"]))
-            if st.button("Cambiar SC"):
-                st.success(f"Juan, ponle {nuevo_sc} de SC a {target} en el Excel.")
+        with tab2:
+            nuevo_sc = st.slider("Ajustar Social Credit:", 0, 100, int(df.at[c_idx, "SC"]))
+            if st.button("Guardar cambios de SC"):
+                st.success(f"Juan, actualiza el SC de {ciudadano} a {nuevo_sc} en el Excel.")
+            
+            st.divider()
+            nuevo_p = st.text_input("Nuevo PIN temporal:", max_chars=4)
+            if st.button("Cambiar PIN"):
+                st.info(f"Juan, cambia el PIN de {ciudadano} por {nuevo_p} en el Excel.")
 
-    # 4. CAMBIAR PIN (SIDEBAR)
+    # BOTÓN DE CERRAR SESIÓN
     with st.sidebar:
-        st.subheader("🔐 Seguridad")
-        n_p = st.text_input("Nuevo PIN", max_chars=4)
-        if st.button("Cambiar PIN"):
-            st.info(f"Juan, cambia el PIN de {u_id} a {n_p} en el Excel.")
         if st.button("Cerrar Sesión"):
             del st.session_state.user
             st.rerun()
