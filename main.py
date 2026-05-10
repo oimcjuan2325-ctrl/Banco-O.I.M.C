@@ -8,7 +8,7 @@ st.set_page_config(page_title="O.I.M.C. Banco Real", page_icon="🏛️", layout
 
 # 2. CONEXIÓN A GOOGLE SHEETS
 # PEGA AQUÍ TU ENLACE DE GOOGLE SHEETS
-url = "TU_URL_DE_GOOGLE_SHEETS_AQUÍ"
+url = "https://docs.google.com/spreadsheets/d/1tfFblkVs5AcPGQFXHIv9lHE2I8MKvZTc-yApAnEWKRc/edit?usp=sharing"
 conn = st.connection("gsheets", type=GSheetsConnection)
 
 def cargar_datos():
