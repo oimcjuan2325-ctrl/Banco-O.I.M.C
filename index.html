@@ -1,0 +1,56 @@
+https://github.com/oimcjuan2325-ctrl/Banco-O.I.M.C/tree/main/.devcontainer
+<div id="oimc-header-container" ... >
+<div id="oimc-header-container" style="display: flex; gap: 20px; padding: 20px; background: #f0f2f5; font-family: sans-serif;">
+    <div id="news-section" style="flex: 2; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-left: 5px solid #2c3e50;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h2 style="margin: 0; color: #2c3e50;">📰 Diario de la Victoria</h2>
+            <button id="admin-news-btn" onclick="toggleNewsForm()" style="display: none; background: #27ae60; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">+ Crear Noticia</button>
+        </div>
+        <div id="news-feed" style="max-height: 200px; overflow-y: auto; border-top: 1px solid #eee; padding-top: 10px;">
+            <div style="margin-bottom: 15px; padding: 10px; background: #fff9c4; border-radius: 8px;">
+                <small style="color: #f57f17; font-weight: bold;">[ÚLTIMA HORA]</small>
+                <h4 style="margin: 5px 0;">¡Iñaki capturado!</h4>
+                <p style="margin: 0; font-size: 0.9rem;">Entregado por los Futboleros en la capital.</p>
+            </div>
+        </div>
+        <div id="news-form" style="display: none; margin-top: 15px;">
+            <input type="text" id="news-title" placeholder="Título..." style="width: 100%; margin-bottom: 5px; padding: 5px;">
+            <textarea id="news-body" placeholder="Noticia..." style="width: 100%; margin-bottom: 5px; padding: 5px;"></textarea>
+            <button onclick="postNews()" style="background: #2c3e50; color: white; border: none; padding: 8px 15px; border-radius: 5px; width: 100%;">Publicar</button>
+        </div>
+    </div>
+    <div id="login-section" style="flex: 1; background: #2c3e50; color: white; padding: 20px; border-radius: 12px; min-width: 200px;">
+        <h3 style="margin-top: 0;">🔐 Acceso Juan</h3>
+        <input type="text" id="user-login" placeholder="Usuario" style="width: 100%; padding: 8px; margin-bottom: 10px; border-radius: 5px; border: none;">
+        <button onclick="checkAuth()" style="width: 100%; padding: 10px; background: #e74c3c; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">Entrar</button>
+        <p id="status-msg" style="margin-top: 10px; font-size: 0.8rem; text-align: center;"></p>
+    </div>
+</div>
+
+<script>
+    function checkAuth() {
+        const user = document.getElementById('user-login').value.toLowerCase();
+        if (user === 'juan') {
+            document.getElementById('admin-news-btn').style.display = 'block';
+            document.getElementById('status-msg').innerText = "¡Bienvenido, Juan!";
+            document.getElementById('status-msg').style.color = "#2ecc71";
+        }
+    }
+    function toggleNewsForm() {
+        const form = document.getElementById('news-form');
+        form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    }
+    function postNews() {
+        const title = document.getElementById('news-title').value;
+        const body = document.getElementById('news-body').value;
+        if(title && body) {
+            const newItem = document.createElement('div');
+            newItem.style = "margin-bottom: 15px; padding: 10px; background: #e1f5fe; border-radius: 8px; border-left: 4px solid #03a9f4;";
+            newItem.innerHTML = `<h4 style="margin: 5px 0;">${title}</h4><p style="margin: 0; font-size: 0.9rem;">${body}</p>`;
+            document.getElementById('news-feed').prepend(newItem);
+            document.getElementById('news-title').value = '';
+            document.getElementById('news-body').value = '';
+            toggleNewsForm();
+        }
+    }
+</script>
