@@ -2,76 +2,154 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>O.I.M.C. - Sistema Central</title>
-</head>
-<body style="margin:0; background-color: #f0f2f5;">
-
-    <div id="oimc-news-system" style="display: flex; flex-wrap: wrap; gap: 20px; padding: 20px; background: #f8f9fa; font-family: sans-serif; border-bottom: 4px solid #2c3e50; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+    <title>O.I.M.C. - Sistema Integrado</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; background: #f0f2f5; color: #333; }
+        .header { background: #2c3e50; color: white; padding: 15px; text-align: center; border-bottom: 5px solid #e74c3c; }
         
-        <div style="flex: 2; background: white; padding: 25px; border-radius: 12px; min-width: 300px; border: 1px solid #e0e0e0;">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #2c3e50; padding-bottom: 10px; margin-bottom: 20px;">
-                <h2 style="margin: 0; color: #2c3e50;">📰 COMUNICADOS O.I.M.C.</h2>
-                <span id="role-badge" style="background: #bdc3c7; color: white; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold;">LECTURA</span>
-            </div>
-            
-            <div id="news-feed" style="max-height: 300px; overflow-y: auto;">
-                <div style="padding: 15px; background: #fff3cd; border-left: 5px solid #ffc107; border-radius: 4px; margin-bottom: 15px; color: #333;">
-                    <strong>[NOTICIA DE PAZ]</strong>
-                    <p style="margin: 5px 0;">La web ha sido actualizada. Iñaki sigue bajo custodia.</p>
-                </div>
-            </div>
+        /* Sistema de Navegación */
+        .nav-tabs { display: flex; justify-content: center; background: #34495e; position: sticky; top: 0; z-index: 100; }
+        .tab-btn { padding: 15px 25px; cursor: pointer; color: white; border: none; background: none; font-weight: bold; transition: 0.3s; font-size: 1rem; }
+        .tab-btn:hover { background: #4e6a85; }
+        .tab-btn.active { background: #e74c3c; border-bottom: 3px solid white; }
+        
+        .container { max-width: 1000px; margin: 20px auto; padding: 0 20px; }
+        .tab-content { display: none; background: white; padding: 25px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); min-height: 400px; }
+        .tab-content.active { display: block; }
 
-            <div id="admin-editor" style="display: none; margin-top: 25px; padding: 20px; background: #e9f7ef; border-radius: 10px; border: 1px dashed #27ae60;">
-                <h3 style="margin-top: 0; color: #218838;">✍️ Redactar Orden</h3>
-                <input type="text" id="news-title" placeholder="Título..." style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #ccc;">
-                <textarea id="news-body" placeholder="Mensaje..." style="width: 100%; padding: 10px; height: 60px; border-radius: 5px; border: 1px solid #ccc; margin-bottom: 10px;"></textarea>
-                <button onclick="addNews()" style="width: 100%; background: #27ae60; color: white; border: none; padding: 12px; border-radius: 5px; cursor: pointer; font-weight: bold;">PUBLICAR</button>
-            </div>
-        </div>
+        /* Estilos de Noticias */
+        .news-item { padding: 15px; border-left: 5px solid #3498db; background: #f8f9fa; margin-bottom: 15px; border-radius: 4px; box-shadow: 2px 2px 5px rgba(0,0,0,0.05); }
+        .news-date { color: #e74c3c; font-size: 0.8rem; font-weight: bold; }
+        
+        /* Estilos de Login */
+        .login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #2c3e50; display: flex; justify-content: center; align-items: center; z-index: 1000; }
+        .login-box { background: white; padding: 30px; border-radius: 15px; text-align: center; width: 300px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        
+        input, textarea { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+        .btn-action { background: #27ae60; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; font-size: 1rem; }
+        .btn-action:hover { opacity: 0.9; }
 
-        <div style="flex: 1; min-width: 240px; background: #2c3e50; color: white; padding: 25px; border-radius: 12px; text-align: center;">
-            <h3 style="border-bottom: 1px solid #555; padding-bottom: 10px;">🔐 ACCESO</h3>
-            <input type="text" id="user-input" placeholder="Usuario..." style="width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 6px; border: none;">
-            <button onclick="loginSystem()" style="width: 100%; padding: 12px; background: #e74c3c; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">ACCEDER</button>
-            <p id="login-status" style="margin-top: 15px; font-weight: bold;"></p>
+        /* Estilo para el Banco (puedes meter tu código viejo aquí) */
+        #banco-frame { width: 100%; border: none; min-height: 500px; background: #fff; }
+    </style>
+</head>
+<body>
+
+<div id="login-screen" class="login-overlay">
+    <div class="login-box">
+        <h2 style="color: #2c3e50; margin-top: 0;">O.I.M.C.</h2>
+        <p>Introduzca Credenciales</p>
+        <input type="text" id="user-input" placeholder="Usuario...">
+        <button onclick="login()" class="btn-action" style="background: #e74c3c;">ACCEDER</button>
+    </div>
+</div>
+
+<div class="header">
+    <h1 style="margin: 0; font-size: 1.5rem;">🏛️ CENTRO DE MANDO O.I.M.C.</h1>
+    <small id="user-display">Sesión no iniciada</small>
+</div>
+
+<div id="nav-bar" class="nav-tabs" style="display: none;">
+    <button class="tab-btn active" onclick="openTab('tab-banco', this)">🏦 BANCO</button>
+    <button class="tab-btn" onclick="openTab('tab-ver', this)">📰 NOTICIAS</button>
+    <button id="admin-tab-btn" class="tab-btn" onclick="openTab('tab-redactar', this)" style="display: none; color: #2ecc71;">✍️ REDACTAR</button>
+</div>
+
+<div class="container">
+    <div id="tab-banco" class="tab-content active">
+        <h2 style="color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px;">Sistema Bancario</h2>
+        <div id="contenido-banco">
+            <p style="text-align: center; color: #666; padding: 50px;">
+                [ Gobernador: El sistema del banco está activo y protegido ]<br>
+                <br>
+                <em>(Aquí se integra automáticamente tu tabla de dinero o mapa)</em>
+            </p>
         </div>
     </div>
 
-    <script>
-        function loginSystem() {
-            const user = document.getElementById('user-input').value.trim().toLowerCase();
-            const editor = document.getElementById('admin-editor');
-            const badge = document.getElementById('role-badge');
-            const status = document.getElementById('login-status');
+    <div id="tab-ver" class="tab-content">
+        <h2 style="color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px;">Diario de la Victoria</h2>
+        <div id="news-feed">
+            </div>
+    </div>
 
-            if (user === 'juan') {
-                editor.style.display = 'block';
-                badge.innerText = "ADMINISTRADOR";
-                badge.style.background = "#27ae60";
-                status.innerText = "✅ Sesión: Gobernador Juan";
-                status.style.color = "#2ecc71";
-            } else if (user !== "") {
-                editor.style.display = 'none';
-                badge.innerText = "USUARIO: " + user.toUpperCase();
-                badge.style.background = "#3498db";
-                status.innerText = "👤 Usuario: " + user;
-                status.style.color = "#3498db";
-            }
+    <div id="tab-redactar" class="tab-content">
+        <h2 style="color: #27ae60; border-bottom: 2px solid #27ae60; padding-bottom: 10px;">Nuevo Decreto Gubernamental</h2>
+        <input type="text" id="title-input" placeholder="Título del comunicado oficial...">
+        <textarea id="body-input" placeholder="Escriba las órdenes o noticias aquí..."></textarea>
+        <button onclick="saveNews()" class="btn-action">PUBLICAR Y GUARDAR EN MEMORIA</button>
+    </div>
+</div>
+
+<script>
+    let currentUser = "";
+
+    function login() {
+        const user = document.getElementById('user-input').value.trim().toLowerCase();
+        if (user === "") return;
+
+        currentUser = user;
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('nav-bar').style.display = 'flex';
+        document.getElementById('user-display').innerText = "Conectado como: " + user.toUpperCase();
+
+        if (user === 'juan') {
+            document.getElementById('admin-tab-btn').style.display = 'block';
+        }
+        
+        loadNews();
+    }
+
+    function openTab(tabId, element) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        
+        document.getElementById(tabId).classList.add('active');
+        element.classList.add('active');
+    }
+
+    // MEMORIA DE NOTICIAS
+    function saveNews() {
+        const title = document.getElementById('title-input').value;
+        const body = document.getElementById('body-input').value;
+        const date = new Date().toLocaleString('es-ES', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+
+        if (!title || !body) return alert("Gobernador, el comunicado está incompleto.");
+
+        const newsObj = { title, body, date };
+        let savedNews = JSON.parse(localStorage.getItem('oimc_news')) || [];
+        savedNews.unshift(newsObj);
+        localStorage.setItem('oimc_news', JSON.stringify(savedNews));
+
+        document.getElementById('title-input').value = "";
+        document.getElementById('body-input').value = "";
+        loadNews();
+        alert("Noticia publicada con éxito.");
+        
+        // Volver a la pestaña de ver noticias automáticamente
+        const newsBtn = document.querySelectorAll('.tab-btn')[1];
+        openTab('tab-ver', newsBtn);
+    }
+
+    function loadNews() {
+        const feed = document.getElementById('news-feed');
+        const savedNews = JSON.parse(localStorage.getItem('oimc_news')) || [];
+        
+        if (savedNews.length === 0) {
+            feed.innerHTML = "<div style='text-align:center; padding:40px; color:#999;'>No hay comunicados oficiales recientes.</div>";
+            return;
         }
 
-        function addNews() {
-            const t = document.getElementById('news-title').value;
-            const b = document.getElementById('news-body').value;
-            if (t && b) {
-                const feed = document.getElementById('news-feed');
-                const item = document.createElement('div');
-                item.style = "padding: 15px; background: #e3f2fd; border-left: 5px solid #2196f3; border-radius: 4px; margin-bottom: 15px; color: #333;";
-                item.innerHTML = `<strong>[COMUNICADO] ${t}</strong><p style="margin: 5px 0;">${b}</p><small style="color: #777;">Por: Gobernador Juan</small>`;
-                feed.prepend(item);
-                document.getElementById('news-title').value = '';
-                document.getElementById('news-body').value = '';
-            }
-        }
-    </script>
+        feed.innerHTML = savedNews.map(n => `
+            <div class="news-item">
+                <span class="news-date">${n.date}</span>
+                <h3 style="margin: 5px 0; color:#2c3e50;">${n.title}</h3>
+                <p style="margin: 0; line-height: 1.5;">${n.body}</p>
+                <div style="margin-top:10px; font-size:0.7rem; color:#aaa; text-align:right;">AUTENTICADO POR O.I.M.C.</div>
+            </div>
+        `).join('');
+    }
+</script>
+
 </body>
 </html>
