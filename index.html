@@ -2,152 +2,83 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>O.I.M.C. - Sistema Integrado</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O.I.M.C. Central Bank</title>
     <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; background: #f0f2f5; color: #333; }
-        .header { background: #2c3e50; color: white; padding: 15px; text-align: center; border-bottom: 5px solid #e74c3c; }
-        
-        /* Sistema de Navegación */
-        .nav-tabs { display: flex; justify-content: center; background: #34495e; position: sticky; top: 0; z-index: 100; }
-        .tab-btn { padding: 15px 25px; cursor: pointer; color: white; border: none; background: none; font-weight: bold; transition: 0.3s; font-size: 1rem; }
-        .tab-btn:hover { background: #4e6a85; }
-        .tab-btn.active { background: #e74c3c; border-bottom: 3px solid white; }
-        
-        .container { max-width: 1000px; margin: 20px auto; padding: 0 20px; }
-        .tab-content { display: none; background: white; padding: 25px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); min-height: 400px; }
-        .tab-content.active { display: block; }
-
-        /* Estilos de Noticias */
-        .news-item { padding: 15px; border-left: 5px solid #3498db; background: #f8f9fa; margin-bottom: 15px; border-radius: 4px; box-shadow: 2px 2px 5px rgba(0,0,0,0.05); }
-        .news-date { color: #e74c3c; font-size: 0.8rem; font-weight: bold; }
-        
-        /* Estilos de Login */
-        .login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #2c3e50; display: flex; justify-content: center; align-items: center; z-index: 1000; }
-        .login-box { background: white; padding: 30px; border-radius: 15px; text-align: center; width: 300px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-        
-        input, textarea { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
-        .btn-action { background: #27ae60; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; font-size: 1rem; }
-        .btn-action:hover { opacity: 0.9; }
-
-        /* Estilo para el Banco (puedes meter tu código viejo aquí) */
-        #banco-frame { width: 100%; border: none; min-height: 500px; background: #fff; }
+        body { font-family: sans-serif; background: #1a1a1a; color: white; text-align: center; padding: 10px; }
+        .card { background: #2a2a2a; padding: 20px; border-radius: 20px; max-width: 500px; margin: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .btn { padding: 12px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; width: 45%; margin: 5px; color: white; }
+        .btn-red { background: #ff4757; } .btn-green { background: #2ed573; } .btn-purple { background: #5352ed; width: 94%; }
+        input, select { width: 90%; padding: 10px; margin: 10px 0; border-radius: 8px; border: none; }
+        #admin-zone { display: none; margin-top: 30px; border: 2px solid #eccc68; padding: 15px; border-radius: 15px; }
+        iframe { width: 100%; height: 200px; border: none; margin-top: 15px; background: white; border-radius: 10px; }
     </style>
 </head>
 <body>
 
-<div id="login-screen" class="login-overlay">
-    <div class="login-box">
-        <h2 style="color: #2c3e50; margin-top: 0;">O.I.M.C.</h2>
-        <p>Introduzca Credenciales</p>
-        <input type="text" id="user-input" placeholder="Usuario...">
-        <button onclick="login()" class="btn-action" style="background: #e74c3c;">ACCEDER</button>
+<div class="card">
+    <h1>🏛️ Banco O.I.M.C.</h1>
+    
+    <iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vTvTQTV_rKwPoMfZ75lh_b3_ScvJYD74zt3GksK0mvB8lk64Z0SlSMAxXHxigqJL7CUUt8H8OJVkK5p/pub?output=csv"></iframe>
+
+    <div style="margin-top: 15px;">
+        <button onclick="window.open('https://docs.google.com/forms/d/e/1FAIpQLSeA403BSPl4lDWCu3kkPsHBXY9keYJGXgwLLhnSyov3oB0lyw/viewform?usp=header')" class="btn btn-red">RETIRAR (-)</button>
+        <button onclick="window.open('https://docs.google.com/forms/d/e/1FAIpQLScYctqaLnfL9BQbHYYBvmrUWhLeciCN2kRVbS5i9w9R49-a1Q/viewform?usp=header')" class="btn btn-green">INGRESAR (+)</button>
     </div>
-</div>
 
-<div class="header">
-    <h1 style="margin: 0; font-size: 1.5rem;">🏛️ CENTRO DE MANDO O.I.M.C.</h1>
-    <small id="user-display">Sesión no iniciada</small>
-</div>
+    <div style="background: #333; padding: 15px; border-radius: 15px; margin-top: 15px;">
+        <h3>📲 Bizum Instantáneo</h3>
+        <input type="text" id="b-emisor" placeholder="Tu Nombre">
+        <input type="password" id="b-pin" placeholder="Tu PIN">
+        <input type="text" id="b-receptor" placeholder="¿A quién envías?">
+        <input type="number" id="b-cantidad" placeholder="Cantidad OI">
+        <button onclick="realizarBizum()" class="btn btn-purple">ENVIAR BIZUM</button>
+    </div>
 
-<div id="nav-bar" class="nav-tabs" style="display: none;">
-    <button class="tab-btn active" onclick="openTab('tab-banco', this)">🏦 BANCO</button>
-    <button class="tab-btn" onclick="openTab('tab-ver', this)">📰 NOTICIAS</button>
-    <button id="admin-tab-btn" class="tab-btn" onclick="openTab('tab-redactar', this)" style="display: none; color: #2ecc71;">✍️ REDACTAR</button>
-</div>
+    <button onclick="accesoAdmin()" style="background:none; border:none; color:#555; margin-top:20px; font-size:10px;">ACCESO GOBERNADOR</button>
 
-<div class="container">
-    <div id="tab-banco" class="tab-content active">
-        <h2 style="color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px;">Sistema Bancario</h2>
-        <div id="contenido-banco">
-            <p style="text-align: center; color: #666; padding: 50px;">
-                [ Gobernador: El sistema del banco está activo y protegido ]<br>
-                <br>
-                <em>(Aquí se integra automáticamente tu tabla de dinero o mapa)</em>
-            </p>
+    <div id="admin-zone">
+        <h2 style="color:#eccc68">👑 PANEL DE MANDO</h2>
+        <input type="text" id="a-user" placeholder="Nombre Ciudadano">
+        
+        <div style="background:#444; padding:10px; border-radius:10px;">
+            <label>Social Credit: <span id="sc-val">70</span></label>
+            <input type="range" min="0" max="100" value="70" oninput="actualizarSC(this.value)">
+            <p>Sueldo: <span id="a-sueldo">4</span> OI</p>
+            <button onclick="alert('SC Guardado')" style="background:#eccc68; border:none; padding:5px; width:100%">GUARDAR SC</button>
         </div>
-    </div>
 
-    <div id="tab-ver" class="tab-content">
-        <h2 style="color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px;">Diario de la Victoria</h2>
-        <div id="news-feed">
-            </div>
-    </div>
-
-    <div id="tab-redactar" class="tab-content">
-        <h2 style="color: #27ae60; border-bottom: 2px solid #27ae60; padding-bottom: 10px;">Nuevo Decreto Gubernamental</h2>
-        <input type="text" id="title-input" placeholder="Título del comunicado oficial...">
-        <textarea id="body-input" placeholder="Escriba las órdenes o noticias aquí..."></textarea>
-        <button onclick="saveNews()" class="btn-action">PUBLICAR Y GUARDAR EN MEMORIA</button>
+        <div style="display:flex; margin-top:10px;">
+            <button onclick="alert('Sueldo Pagado')" class="btn btn-green">PAGAR SUELDO</button>
+            <button onclick="alert('Impuesto Cobrado')" class="btn btn-red">COBRAR IMPUESTO</button>
+        </div>
     </div>
 </div>
 
 <script>
-    let currentUser = "";
-
-    function login() {
-        const user = document.getElementById('user-input').value.trim().toLowerCase();
-        if (user === "") return;
-
-        currentUser = user;
-        document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('nav-bar').style.display = 'flex';
-        document.getElementById('user-display').innerText = "Conectado como: " + user.toUpperCase();
-
-        if (user === 'juan') {
-            document.getElementById('admin-tab-btn').style.display = 'block';
-        }
+    function realizarBizum() {
+        const emisor = document.getElementById('b-emisor').value;
+        const pin = document.getElementById('b-pin').value;
+        const receptor = document.getElementById('b-receptor').value;
+        const cantidad = document.getElementById('b-cantidad').value;
         
-        loadNews();
-    }
-
-    function openTab(tabId, element) {
-        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        
-        document.getElementById(tabId).classList.add('active');
-        element.classList.add('active');
-    }
-
-    // MEMORIA DE NOTICIAS
-    function saveNews() {
-        const title = document.getElementById('title-input').value;
-        const body = document.getElementById('body-input').value;
-        const date = new Date().toLocaleString('es-ES', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
-
-        if (!title || !body) return alert("Gobernador, el comunicado está incompleto.");
-
-        const newsObj = { title, body, date };
-        let savedNews = JSON.parse(localStorage.getItem('oimc_news')) || [];
-        savedNews.unshift(newsObj);
-        localStorage.setItem('oimc_news', JSON.stringify(savedNews));
-
-        document.getElementById('title-input').value = "";
-        document.getElementById('body-input').value = "";
-        loadNews();
-        alert("Noticia publicada con éxito.");
-        
-        // Volver a la pestaña de ver noticias automáticamente
-        const newsBtn = document.querySelectorAll('.tab-btn')[1];
-        openTab('tab-ver', newsBtn);
-    }
-
-    function loadNews() {
-        const feed = document.getElementById('news-feed');
-        const savedNews = JSON.parse(localStorage.getItem('oimc_news')) || [];
-        
-        if (savedNews.length === 0) {
-            feed.innerHTML = "<div style='text-align:center; padding:40px; color:#999;'>No hay comunicados oficiales recientes.</div>";
+        if(!emisor || !pin || !receptor || !cantidad) {
+            alert("Rellena todos los campos del Bizum");
             return;
         }
+        // Nota: Aquí se conectaría con google.script.run para ser 100% automático
+        alert("¡Orden de Bizum enviada! Revisando saldo y PIN...");
+    }
 
-        feed.innerHTML = savedNews.map(n => `
-            <div class="news-item">
-                <span class="news-date">${n.date}</span>
-                <h3 style="margin: 5px 0; color:#2c3e50;">${n.title}</h3>
-                <p style="margin: 0; line-height: 1.5;">${n.body}</p>
-                <div style="margin-top:10px; font-size:0.7rem; color:#aaa; text-align:right;">AUTENTICADO POR O.I.M.C.</div>
-            </div>
-        `).join('');
+    function accesoAdmin() {
+        let p = prompt("Contraseña de Gobernador:");
+        if(p === "OIMC2026") document.getElementById('admin-zone').style.display = 'block';
+    }
+
+    function actualizarSC(v) {
+        document.getElementById('sc-val').innerText = v;
+        let s = v >= 90 ? 5 : v >= 70 ? 4 : v >= 50 ? 2 : 0;
+        document.getElementById('a-sueldo').innerText = s;
     }
 </script>
 
