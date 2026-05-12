@@ -3,118 +3,179 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Banco O.I.M.C. - Sistema Central</title>
+    <title>Banco Central O.I.M.C.</title>
     <style>
         :root { --gold: #eccc68; --red: #ff4757; --green: #2ed573; --bg: #0f0f0f; --card: #1a1a1a; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; display: flex; justify-content: center; padding: 20px; }
-        .card { background: var(--card); padding: 25px; border-radius: 20px; width: 100%; max-width: 450px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .card { background: var(--card); padding: 25px; border-radius: 20px; width: 100%; max-width: 450px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; }
         input, select { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #444; background: #252525; color: white; box-sizing: border-box; }
         .btn { width: 100%; padding: 15px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.3s; }
         .btn-gold { background: var(--gold); color: black; }
         .btn-purple { background: #5352ed; color: white; }
         .hidden { display: none; }
-        .stat-box { background: #252525; padding: 10px; border-radius: 10px; margin: 5px 0; border-left: 4px solid var(--gold); }
-        .historial { background: #000; height: 100px; overflow-y: auto; padding: 10px; font-size: 12px; border-radius: 8px; margin-top: 10px; text-align: left; }
+        .stat-box { background: #252525; padding: 12px; border-radius: 10px; margin: 8px 0; border-left: 4px solid var(--gold); text-align: left; }
+        .historial { background: #000; height: 120px; overflow-y: auto; padding: 10px; font-size: 13px; border-radius: 8px; margin-top: 10px; text-align: left; border: 1px solid #333; white-space: pre-line; }
     </style>
 </head>
 <body>
 
-    <!-- 1. LOGIN -->
+    <!-- 1. PANTALLA DE LOGIN -->
     <div id="pantalla-login" class="card">
         <h1 style="color: var(--gold)">🏛️ Banco O.I.M.C.</h1>
-        <p>Tu Cuenta de Banco de la O.I.M.C.</p>
+        <p>Introduce tu Usuario y PIN</p>
         <input type="text" id="user-in" placeholder="Nombre / Usuario">
         <input type="password" id="pin-in" placeholder="PIN">
-        <button onclick="login()" class="btn btn-gold">INICIAR SESIÓN</button>
+        <button onclick="login()" class="btn btn-gold">ENTRAR AL SISTEMA</button>
+        <p id="error-login" style="color: var(--red); display:none; font-size:12px; margin-top:10px;">⚠️ Datos incorrectos</p>
     </div>
 
-    <!-- 2. PANEL USER -->
+    <!-- 2. PANEL DE CIUDADANO (USER) -->
     <div id="panel-user" class="card hidden">
         <h2 id="name-user" style="color: var(--gold)">Hola</h2>
         <div class="stat-box">💰 Saldo: <span id="u-saldo">0</span> OI</div>
         <div class="stat-box">📊 Social Credit: <span id="u-sc">0</span></div>
-        <div class="stat-box">💵 Sueldo Base: <span id="u-sueldo">0</span> OI</div>
+        <div class="stat-box">💵 Sueldo: <span id="u-sueldo">0</span> OI</div>
 
-        <h3>📲 Bizum</h3>
-        <select id="b-destinatario"><option>Elegir usuario...</option></select>
-        <input type="number" id="b-monto" placeholder="Cantidad OI">
-        <input type="text" id="b-msj" placeholder="Mensaje">
-        <button onclick="enviarBizum()" class="btn btn-purple">ENVIAR BIZUM</button>
-
-        <h4>📜 Historial de Bizums</h4>
-        <div id="u-historial" class="historial">No hay movimientos.</div>
-    </div>
-
-    <!-- 3. PANEL ADMIN -->
-    <div id="panel-admin" class="card hidden">
-        <h2 style="color: var(--gold)">👑 Gobernador</h2>
-        <div class="stat-box">💰 Tesoro: <span id="a-saldo">0</span> OI</div>
-        
-        <div style="border: 1px solid var(--gold); padding: 15px; border-radius: 15px; margin-top: 15px;">
-            <h3>⚙️ Gestión de Ciudadanos</h3>
-            <select id="a-lista-users" onchange="verHistorialAdmin(this.value)">
-                <option>Seleccionar usuario...</option>
-            </select>
-            
-            <p>Social Credit (Barrita): <span id="sc-label">70</span></p>
-            <input type="range" id="sc-slider" min="0" max="100" oninput="actualizarSCLabel(this.value)">
-            <button onclick="guardarSC()" class="btn btn-gold">GUARDAR SOCIAL CREDIT</button>
-            
-            <input type="number" id="a-monto" placeholder="Cantidad OI">
-            <button onclick="pagoSueldo()" class="btn" style="background: var(--green)">PAGAR SUELDO</button>
-            <button onclick="cobroImpuesto()" class="btn" style="background: var(--red)">COBRAR IMPUESTO</button>
+        <div style="background: #222; padding: 15px; border-radius: 15px; margin-top: 20px;">
+            <h3 style="margin-top:0">📲 Nuevo Bizum</h3>
+            <select id="b-destinatario"></select>
+            <input type="number" id="b-monto" placeholder="Cantidad OI">
+            <input type="text" id="b-msj" placeholder="Mensaje (Opcional)">
+            <button onclick="enviarBizum()" class="btn btn-purple">ENVIAR BIZUM</button>
         </div>
 
-        <h4>📜 Historial Maestro (Admin)</h4>
-        <div id="a-historial" class="historial">Selecciona un usuario para ver sus bizums.</div>
+        <h4>📜 Mi Historial</h4>
+        <div id="u-historial" class="historial">Cargando movimientos...</div>
+        <button onclick="location.reload()" class="btn" style="background:#333; font-size:10px;">Cerrar Sesión</button>
+    </div>
+
+    <!-- 3. PANEL DE GOBERNADOR (ADMIN) -->
+    <div id="panel-admin" class="card hidden">
+        <h2 style="color: var(--gold)">👑 Gobernador</h2>
+        
+        <div style="border: 1px solid var(--gold); padding: 15px; border-radius: 15px; margin-top: 15px;">
+            <h3>⚙️ Gestión Nacional</h3>
+            <select id="a-lista-users" onchange="verDetalleAdmin(this.value)">
+                <option value="">Seleccionar Ciudadano...</option>
+            </select>
+            
+            <p>Ajustar Social Credit: <span id="sc-label" style="font-weight:bold; color:var(--gold)">70</span></p>
+            <input type="range" id="sc-slider" min="0" max="100" value="70" oninput="document.getElementById('sc-label').innerText = this.value">
+            <button onclick="adminAccion('sc')" class="btn btn-gold">GUARDAR SOCIAL CREDIT</button>
+            
+            <input type="number" id="a-monto" placeholder="Cantidad OI">
+            <button onclick="adminAccion('sueldo')" class="btn" style="background: var(--green); color:black;">PAGAR SUELDO</button>
+            <button onclick="adminAccion('impuesto')" class="btn" style="background: var(--red)">COBRAR IMPUESTO</button>
+        </div>
+
+        <h4>📜 Historial Maestro</h4>
+        <div id="a-historial" class="historial">Selecciona un usuario para ver su actividad.</div>
+        <button onclick="location.reload()" class="btn" style="background:#333; font-size:10px;">Salir de Gestión</button>
     </div>
 
 <script>
-    // Estos datos vendrán del Excel en el Paso 2
-    const usuarios = {
-        "Juan": {pin: "2313", sc: 70, saldo: 10, rol: "user"},
-        "Iñaki": {pin: "1010", sc: 20, saldo: 10, rol: "user"},
-        "Banco-OIMC": {pin: "2313", sc: 100, saldo: 100, rol: "admin"}
-    };
+    // --- CONEXIÓN CON EL TESORO ---
+    // PEGA AQUÍ TU URL QUE TERMINA EN /exec
+    const urlScript = "https://script.google.com/macros/s/AKfycbx4i9WBKff8oVXP_9t7LoE8oKCwuldyoRpgsgJKNVWUBaCiztjxLaD9adEIMniwbPz4aw/exec"; 
 
-    let sesionActiva = null;
+    let datosGlobales = [];
+    let usuarioActivo = null;
 
-    function login() {
-        const u = document.getElementById('user-in').value;
-        const p = document.getElementById('pin-in').value;
-        if(usuarios[u] && usuarios[u].pin === p) {
-            sesionActiva = u;
+    async function cargarBaseDeDatos() {
+        try {
+            const res = await fetch(urlScript);
+            datosGlobales = await res.json();
+            poblarListas();
+        } catch (e) { console.log("Error cargando base de datos"); }
+    }
+
+    function poblarListas() {
+        const selects = [document.getElementById('b-destinatario'), document.getElementById('a-lista-users')];
+        selects.forEach(s => {
+            s.innerHTML = '<option value="">Seleccionar...</option>';
+            datosGlobales.slice(1).forEach(fila => {
+                let opt = document.createElement("option");
+                opt.value = fila[0]; opt.innerText = fila[0];
+                s.appendChild(opt);
+            });
+        });
+    }
+
+    async function login() {
+        await cargarBaseDeDatos();
+        const u = document.getElementById('user-in').value.trim();
+        const p = document.getElementById('pin-in').value.trim();
+        
+        const fila = datosGlobales.find(f => f[0].toString().toLowerCase() === u.toLowerCase() && f[1].toString() === p);
+        
+        if(fila) {
+            usuarioActivo = fila;
             document.getElementById('pantalla-login').classList.add('hidden');
-            if(usuarios[u].rol === "admin") {
+            if(fila[4] === "admin") {
                 document.getElementById('panel-admin').classList.remove('hidden');
-                cargarListaUsuarios();
             } else {
                 document.getElementById('panel-user').classList.remove('hidden');
-                document.getElementById('name-user').innerText = "Hola, " + u;
                 actualizarInterfazUser();
             }
-        } else { alert("Datos incorrectos"); }
-    }
-
-    function actualizarSCLabel(v) {
-        document.getElementById('sc-label').innerText = v;
-    }
-
-    function cargarListaUsuarios() {
-        const select = document.getElementById('a-lista-users');
-        const bizumSelect = document.getElementById('b-destinatario');
-        for (let user in usuarios) {
-            let opt = document.createElement("option");
-            opt.value = user; opt.innerText = user;
-            select.appendChild(opt);
+        } else { 
+            document.getElementById('error-login').style.display = 'block';
         }
     }
 
-    // Funciones de simulación (se conectarán al Excel en el Paso 2)
-    function enviarBizum() { alert("Bizum enviado con mensaje"); }
-    function guardarSC() { alert("Social Credit actualizado"); }
-    function pagoSueldo() { alert("Sueldo pagado"); }
-    function cobroImpuesto() { alert("Impuesto cobrado"); }
+    function actualizarInterfazUser() {
+        document.getElementById('name-user').innerText = "Hola, " + usuarioActivo[0];
+        document.getElementById('u-saldo').innerText = usuarioActivo[2];
+        document.getElementById('u-sc').innerText = usuarioActivo[3];
+        let sc = usuarioActivo[3];
+        let sueldo = sc >= 90 ? 5 : sc >= 70 ? 4 : sc >= 50 ? 2 : 0;
+        document.getElementById('u-sueldo').innerText = sueldo;
+        document.getElementById('u-historial').innerText = usuarioActivo[5] || "No hay movimientos registrados.";
+    }
+
+    function verDetalleAdmin(nombre) {
+        const fila = datosGlobales.find(f => f[0] === nombre);
+        if(fila) {
+            document.getElementById('sc-slider').value = fila[3];
+            document.getElementById('sc-label').innerText = fila[3];
+            document.getElementById('a-historial').innerText = fila[5] || "Sin historial.";
+        }
+    }
+
+    async function enviarDatos(paquete) {
+        alert("Enviando orden al Tesoro Central...");
+        await fetch(urlScript, { method: 'POST', body: JSON.stringify(paquete) });
+        location.reload();
+    }
+
+    function enviarBizum() {
+        const dest = document.getElementById('b-destinatario').value;
+        const cant = parseInt(document.getElementById('b-monto').value);
+        const msj = document.getElementById('b-msj').value;
+        if(!dest || !cant) return alert("Faltan datos");
+        
+        enviarDatos({
+            tipo: "bizum",
+            emisor: usuarioActivo[0],
+            receptor: dest,
+            cantidad: cant,
+            mensaje: msj
+        });
+    }
+
+    function adminAccion(tipo) {
+        const user = document.getElementById('a-lista-users').value;
+        const valor = tipo === 'sc' ? parseInt(document.getElementById('sc-slider').value) : parseInt(document.getElementById('a-monto').value);
+        if(!user) return alert("Selecciona un ciudadano");
+
+        enviarDatos({
+            tipo: "admin_accion",
+            usuario: user,
+            accion: tipo,
+            valor: valor
+        });
+    }
+
+    window.onload = cargarBaseDeDatos;
 </script>
 </body>
 </html>
