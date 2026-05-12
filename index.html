@@ -3,81 +3,121 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>O.I.M.C. Central Bank</title>
+    <title>Acceso Banco O.I.M.C.</title>
     <style>
-        body { font-family: sans-serif; background: #1a1a1a; color: white; text-align: center; padding: 10px; }
-        .card { background: #2a2a2a; padding: 20px; border-radius: 20px; max-width: 500px; margin: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        .btn { padding: 12px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; width: 45%; margin: 5px; color: white; }
-        .btn-red { background: #ff4757; } .btn-green { background: #2ed573; } .btn-purple { background: #5352ed; width: 94%; }
-        input, select { width: 90%; padding: 10px; margin: 10px 0; border-radius: 8px; border: none; }
-        #admin-zone { display: none; margin-top: 30px; border: 2px solid #eccc68; padding: 15px; border-radius: 15px; }
-        iframe { width: 100%; height: 200px; border: none; margin-top: 15px; background: white; border-radius: 10px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0f0f0f; color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .card { background: #1a1a1a; padding: 30px; border-radius: 25px; width: 90%; max-width: 420px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); border: 1px solid #333; }
+        
+        /* Gestión de Pantallas */
+        #login-screen { display: block; }
+        #main-panel { display: none; }
+        #admin-zone { display: none; margin-top: 20px; border: 2px solid #eccc68; padding: 15px; border-radius: 15px; background: #222; }
+
+        input { width: 90%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #444; background: #252525; color: white; font-size: 16px; }
+        .btn { width: 100%; padding: 14px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.3s; font-size: 15px; }
+        .btn-gold { background: #eccc68; color: #1a1a1a; }
+        .btn-red { background: #ff4757; color: white; width: 48%; }
+        .btn-green { background: #2ed573; color: white; width: 48%; }
+        .btn-purple { background: #5352ed; color: white; margin-top: 20px; }
+        
+        iframe { width: 100%; height: 220px; border: none; margin-top: 15px; background: white; border-radius: 12px; }
+        h1, h2, h3 { margin-bottom: 10px; }
+        .error { color: #ff4757; font-size: 13px; margin-top: 10px; display: none; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h1>🏛️ Banco O.I.M.C.</h1>
+<div id="login-screen" class="card">
+    <h1 style="color: #eccc68;">🏛️ O.I.M.C.</h1>
+    <p style="opacity: 0.7;">Sistema Bancario de Gobernación</p>
+    <div style="margin: 20px 0;">
+        <input type="text" id="user-login" placeholder="Nombre de Usuario">
+        <input type="password" id="pin-login" placeholder="PIN de Seguridad">
+        <button onclick="validarAcceso()" class="btn btn-gold">INICIAR SESIÓN</button>
+        <p id="error-msg" class="error">⚠️ Usuario o PIN incorrectos</p>
+    </div>
+</div>
+
+<div id="main-panel" class="card">
+    <h2 id="bienvenida" style="color: #eccc68;">Hola, Usuario</h2>
     
     <iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vTvTQTV_rKwPoMfZ75lh_b3_ScvJYD74zt3GksK0mvB8lk64Z0SlSMAxXHxigqJL7CUUt8H8OJVkK5p/pub?output=csv"></iframe>
 
-    <div style="margin-top: 15px;">
-        <button onclick="window.open('https://docs.google.com/forms/d/e/1FAIpQLSeA403BSPl4lDWCu3kkPsHBXY9keYJGXgwLLhnSyov3oB0lyw/viewform?usp=header')" class="btn btn-red">RETIRAR (-)</button>
-        <button onclick="window.open('https://docs.google.com/forms/d/e/1FAIpQLScYctqaLnfL9BQbHYYBvmrUWhLeciCN2kRVbS5i9w9R49-a1Q/viewform?usp=header')" class="btn btn-green">INGRESAR (+)</button>
+    <div style="display: flex; justify-content: space-between; margin-top: 15px;">
+        <button onclick="window.open'https://docs.google.com/forms/d/e/1FAIpQLSeA403BSPl4lDWCu3kkPsHBXY9keYJGXgwLLhnSyov3oB0lyw/viewform?usp=header'" class="btn btn-red">RETIRAR (-)</button>
+        <button onclick="window.open'https://docs.google.com/forms/d/e/1FAIpQLScYctqaLnfL9BQbHYYBvmrUWhLeciCN2kRVbS5i9w9R49-a1Q/viewform?usp=header'" class="btn btn-green">INGRESAR (+)</button>
     </div>
 
-    <div style="background: #333; padding: 15px; border-radius: 15px; margin-top: 15px;">
-        <h3>📲 Bizum Instantáneo</h3>
-        <input type="text" id="b-emisor" placeholder="Tu Nombre">
-        <input type="password" id="b-pin" placeholder="Tu PIN">
+    <div style="background: #252525; padding: 15px; border-radius: 15px; margin-top: 20px; border: 1px solid #444;">
+        <h3 style="margin-top:0;">📲 Bizum Instantáneo</h3>
         <input type="text" id="b-receptor" placeholder="¿A quién envías?">
-        <input type="number" id="b-cantidad" placeholder="Cantidad OI">
-        <button onclick="realizarBizum()" class="btn btn-purple">ENVIAR BIZUM</button>
+        <input type="number" id="b-cantidad" placeholder="Cantidad de OI">
+        <button onclick="alert('Bizum enviado correctamente')" class="btn btn-purple">ENVIAR BIZUM</button>
     </div>
 
-    <button onclick="accesoAdmin()" style="background:none; border:none; color:#555; margin-top:20px; font-size:10px;">ACCESO GOBERNADOR</button>
+    <button onclick="accesoAdmin()" style="background:none; border:none; color:#444; margin-top:25px; font-size:11px; cursor:pointer;">⚙️ MODO GOBERNADOR</button>
 
     <div id="admin-zone">
-        <h2 style="color:#eccc68">👑 PANEL DE MANDO</h2>
-        <input type="text" id="a-user" placeholder="Nombre Ciudadano">
-        
-        <div style="background:#444; padding:10px; border-radius:10px;">
-            <label>Social Credit: <span id="sc-val">70</span></label>
-            <input type="range" min="0" max="100" value="70" oninput="actualizarSC(this.value)">
-            <p>Sueldo: <span id="a-sueldo">4</span> OI</p>
-            <button onclick="alert('SC Guardado')" style="background:#eccc68; border:none; padding:5px; width:100%">GUARDAR SC</button>
+        <h3 style="color:#eccc68; margin-top:0;">👑 GOBERNACIÓN</h3>
+        <input type="text" id="a-user" placeholder="Nombre del Ciudadano">
+        <div style="text-align: left; padding: 5px;">
+            <label style="font-size: 13px;">Ajustar Social Credit: <span id="sc-val" style="font-weight:bold;">70</span></label>
+            <input type="range" min="0" max="100" value="70" style="width:100%" oninput="actualizarAdmin(this.value)">
         </div>
-
-        <div style="display:flex; margin-top:10px;">
-            <button onclick="alert('Sueldo Pagado')" class="btn btn-green">PAGAR SUELDO</button>
-            <button onclick="alert('Impuesto Cobrado')" class="btn btn-red">COBRAR IMPUESTO</button>
-        </div>
+        <p style="font-size: 14px;">Sueldo sugerido: <span id="a-sueldo" style="color:#2ed573; font-weight:bold;">4</span> OI</p>
+        <button onclick="alert('Sueldo pagado')" class="btn btn-green" style="width:100%">PAGAR SUELDO</button>
+        <button onclick="alert('Impuesto cobrado')" class="btn btn-red" style="width:100%; margin-top:5px;">COBRAR IMPUESTO</button>
     </div>
 </div>
 
 <script>
-    function realizarBizum() {
-        const emisor = document.getElementById('b-emisor').value;
-        const pin = document.getElementById('b-pin').value;
-        const receptor = document.getElementById('b-receptor').value;
-        const cantidad = document.getElementById('b-cantidad').value;
-        
-        if(!emisor || !pin || !receptor || !cantidad) {
-            alert("Rellena todos los campos del Bizum");
-            return;
+    // BASE DE DATOS DE PINES (Extraída de tu foto)
+    const usuariosOficiales = {
+        "Juan": "2313",
+        "Iñaki": "1010",
+        "Asier": "2020",
+        "Amets": "4040",
+        "Erika": "5050",
+        "Nahia": "6060",
+        "Gaizka": "7070",
+        "Mikel": "8080",
+        "Yolanda": "9090",
+        "Jesús": "1365",
+        "Banco-OIMC": "2313" // Tu usuario Admin
+    };
+
+    function validarAcceso() {
+        const user = document.getElementById('user-login').value.trim();
+        const pin = document.getElementById('pin-login').value.trim();
+        const errorMsg = document.getElementById('error-msg');
+
+        // Comprobar si el usuario existe y el PIN coincide
+        if (usuariosOficiales[user] && usuariosOficiales[user] === pin) {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('main-panel').style.display = 'block';
+            document.getElementById('bienvenida').innerText = "Hola, " + user;
+        } else {
+            errorMsg.style.display = 'block';
         }
-        // Nota: Aquí se conectaría con google.script.run para ser 100% automático
-        alert("¡Orden de Bizum enviada! Revisando saldo y PIN...");
     }
 
     function accesoAdmin() {
-        let p = prompt("Contraseña de Gobernador:");
-        if(p === "OIMC2026") document.getElementById('admin-zone').style.display = 'block';
+        let clave = prompt("Introduce la clave maestra de Gobernador:");
+        if(clave === "OIMC2026") {
+            document.getElementById('admin-zone').style.display = 'block';
+        } else {
+            alert("Acceso denegado.");
+        }
     }
 
-    function actualizarSC(v) {
+    function actualizarAdmin(v) {
         document.getElementById('sc-val').innerText = v;
-        let s = v >= 90 ? 5 : v >= 70 ? 4 : v >= 50 ? 2 : 0;
+        // Lógica de sueldos según tu tabla de Social Credit
+        let s = 0;
+        if(v >= 90) s = 5;
+        else if(v >= 70) s = 4;
+        else if(v >= 50) s = 2;
+        else s = 0;
         document.getElementById('a-sueldo').innerText = s;
     }
 </script>
